@@ -1,0 +1,12 @@
+<resources>
+
+    <style name="Titleground">
+        <item name="android:background">@drawable/bg</item>
+    </style>
+
+    <style name="MyTheme" parent="android:Theme">
+        <item name="android:windowNoTitle">false</item>
+        <item name="android:windowTitleBackgroundStyle">@style/Titleground</item>
+    </style>
+
+</resources>
