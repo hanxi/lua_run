@@ -5,28 +5,18 @@
     android:layout_height="fill_parent">
 
     <Button
-        android:id="@+id/btnOpen"
+        android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="5dp"
-        android:text="@string/open" />
-    
+        android:text="@string/back" />
+
     <TextView
-        android:id="@+id/titlebarText"        
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="@string/app_name" />
-    
-    <Button
-        android:id="@+id/btnRun"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="5dp"
-        android:text="@string/run_lua" />
     
 </RelativeLayout>

@@ -24,9 +24,8 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
 public class KeywordHighlight {
-
-    private static final String PATH     = Environment.getExternalStorageDirectory() + "/.jota/keyword/";
-    private static final String USERPATH = Environment.getExternalStorageDirectory() + "/.jota/keyword/user/";
+    private static final String PATH     = SdcardHelper.getWriteDir() + "/keyword/";
+    private static final String USERPATH = SdcardHelper.getWriteDir() + "/keyword/user/";
     private static final String EXT      = "conf";
     private static final String ASSET_PATH     = "keyword";
     private static final String COLOR_PATH     = "colorsetting."+EXT;
@@ -35,7 +34,6 @@ public class KeywordHighlight {
     public int color;
 
     static ArrayList<KeywordHighlight> sList = new ArrayList<KeywordHighlight>();
-//    static ArrayList<ForegroundColorSpan> sFcsList = new ArrayList<ForegroundColorSpan>();
     static HashMap<String,Integer> sColorMap = new HashMap<String,Integer>();
     static int mLastStart = 0;
     static int mLastEnd = 0;
@@ -171,6 +169,11 @@ public class KeywordHighlight {
 
         return end;
     }
+    static public void clearHighlight() {
+    	mLastStart=0;
+    	mLastEnd=0;
+    	sTmFcs.clear();
+    }
     
     static public void setHighlight( SpannableStringBuilder buf, int start , int end, int bend)
     {
@@ -188,33 +191,17 @@ public class KeywordHighlight {
     			}
     		}
     	}
-    	System.out.print(mLastStart);
-    	System.out.print(",");
-    	System.out.print(mLastEnd);
         if ( mLastStart == start && mLastEnd == end ){
             return;
         }
         mLastStart = start;
         mLastEnd = end;
 
-
         start = findBlockStart(buf, start);
         end = findBlockEnd(buf, end);
         if ( end+1 < buf.length() ){
             end++;
         }
-/*
-        for(int i=0; i<sFcsList.size(); i++)
-        {
-        	ForegroundColorSpan fcs = sFcsList.get(i);
-        	if (fcs.isLapped(start,end)) {
-        		buf.removeSpan(fcs);
-	            fcs.recycle();  
-	            System.out.println("removeSpan");
-	            sFcsList.remove(fcs);
-        	}
-        }*/
-        //sFcsList.clear();
         Iterator<Area> iter = sTmFcs.keySet().iterator();
         ArrayList<Area> removeList = new ArrayList<Area>();
 		while (iter.hasNext()) {
@@ -224,7 +211,6 @@ public class KeywordHighlight {
         	if (fgspan.isLapped(start,end)) {
         		buf.removeSpan(fgspan);
         		fgspan.recycle();  
-	            System.out.println("removeSpan");
 	            removeList.add(area);
         	}
 		}
@@ -233,27 +219,16 @@ public class KeywordHighlight {
             sTmFcs.remove(area);
 		}
 
-        System.out.println("can hightlight it2");
-
         CharSequence target = buf.subSequence(start, end);
-        System.out.print(target);
         for( KeywordHighlight syn : sList ){
             try{
-                System.out.println("can hightlight it3");
                 Matcher m= syn.pattern.matcher(target);
 
                 while (m.find()) {
                     int matchstart = start+m.start();
                     int matchend = start+m.end();
-                    System.out.println("can hightlight it4");
                     if ( matchstart!=matchend ){
                         boolean found = false;
-                        //for( ForegroundColorSpan fcs : sFcsList ){
-                          //  if ( fcs.isLapped(matchstart, matchend)){
-                            //    found = true;
-                              //  break;
-                            //}
-                        //}
                         Iterator<Area> it = sTmFcs.keySet().iterator();
                 		while (it.hasNext()) {
                 			//it.next()得到的是key，tm.get(key)得到obj
@@ -267,8 +242,6 @@ public class KeywordHighlight {
                         if ( !found ){
                             ForegroundColorSpan fgspan = ForegroundColorSpan.obtain(syn.color,matchstart,matchend);
                             buf.setSpan(fgspan, matchstart, matchend, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            System.out.print("\n");System.out.print(matchstart);System.out.print(",");
-                            System.out.print(matchend);
                             sTmFcs.put(new Area(matchstart,matchend),fgspan);
                         }
                     }
@@ -382,8 +355,6 @@ public class KeywordHighlight {
         }
         loadColorSettings();
 
-        System.out.println("load keyworld");
-
         // parse ini file
         BufferedReader br = null;
         try {
@@ -399,10 +370,7 @@ public class KeywordHighlight {
                     String body = line.substring(separator+1);
 
                     Integer color = sColorMap.get(head);
-                    System.out.println(head);
-                    System.out.println(body);
                     if ( color!=null ){
-                        System.out.println("yyyyyyyyyyyyyyyyyyy");
                         addKeyword( body , color );
                     }
                 }
@@ -421,9 +389,6 @@ public class KeywordHighlight {
             }
         }
         sColorMap.clear();
-        System.out.println("xxxxxxxxxxxxxxxxxxx");
-        System.out.println(sList.size());
-        System.out.println("xxxxxxxxxxxxxxxxxxx");
         return true;
     }
 
@@ -438,6 +403,9 @@ public class KeywordHighlight {
 
             // remove all files except directory..
             File dir = new File(PATH);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
             File[] files = dir.listFiles();
             if ( files != null ){
                 for( File f : files ){

@@ -78,7 +78,6 @@ public class ForegroundColorSpan extends CharacterStyle
 
     public boolean isLapped(int s, int e)
     {
-    	System.out.println("span:"+mStart+","+mEnd+","+s+","+e);
         return  ( mStart < e && s < mEnd );
     }
 

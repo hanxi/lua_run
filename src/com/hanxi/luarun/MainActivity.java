@@ -1,6 +1,7 @@
 package com.hanxi.luarun;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -10,6 +11,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View.OnClickListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -19,36 +23,46 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.System;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.keplerproject.luajava.*;
+import org.openfiledialog.CallbackBundle;
+import org.openfiledialog.OpenFileDialog;
 
 import com.hanxi.luarun.KeywordHighlight;
 
 public class MainActivity extends Activity {
-
+	public static final String PREFS_NAME = "MyPrefsFile";
+	
     private WebView mWebView;
-    private Js mJs;
 	private final static int LISTEN_PORT = 3333;
+	static private int openfileDialogId = 0;
 
 	Button execute;
+	private String mLastOpenFileName;
 	
 	// public so we can play with these from Lua
 	public EditText source;
-	public TextView status;
 	public LuaState L;
 	
 	final StringBuilder output = new StringBuilder();
 
 	Handler handler;
-	ServerThread serverThread;
+//	ServerThread serverThread;
 	
 	private static byte[] readAll(InputStream input) throws Exception {
 		ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
@@ -59,7 +73,53 @@ public class MainActivity extends Activity {
 		}
 		return output.toByteArray();
 	}
+    
+	@Override
+	protected Dialog onCreateDialog(int id,Bundle bundle) {
+		if(id==openfileDialogId){
+			String curPath = bundle.getString("curPath");
+			Map<String, Integer> images = new HashMap<String, Integer>();
+			// 下面几句设置各文件类型的图标， 需要你先把图标添加到资源文件夹
+			images.put(OpenFileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
+			images.put(OpenFileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
+			images.put(OpenFileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
+			images.put("wav", R.drawable.filedialog_wavfile);	//wav文件图标
+			images.put("lua", R.drawable.filedialog_luafile);	//lua文件图标
+			images.put(OpenFileDialog.sEmpty, R.drawable.filedialog_root);
+			Dialog dialog = OpenFileDialog.createDialog(id, this, this.getString(R.string.openfile), new CallbackBundle() {
+				@Override
+				public void callback(Bundle bundle) {
+					String filepath = bundle.getString("path");
+					mLastOpenFileName = filepath;
+			        StringBuffer strb = SdcardHelper.getFileToString(filepath);
+					SpannableStringBuilder sp = new SpannableStringBuilder(strb);
+					KeywordHighlight.clearHighlight();
+					KeywordHighlight.setHighlight(sp,0,sp.length(),0);
+					source.setText(sp);
+			        TextView title = (TextView)findViewById(R.id.titlebarText);
+			        title.setText(SdcardHelper.getFileNameFromPath(filepath));
+				}
+			}, 
+			".lua;",
+			images,
+			curPath);
+			return dialog;
+		}
+		return null;
+	}
 	
+    @Override
+    protected void onStop(){
+       super.onStop();
+      /* We need an Editor object to make preference changes.*/
+      /* All objects are from android.context.Context*/
+      SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+      SharedPreferences.Editor editor = settings.edit();
+      editor.putString("lastOpenFileName", mLastOpenFileName);
+      /* Commit the edits!*/
+      editor.commit();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,7 +127,48 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
 
-        mJs = new Js();
+        SdcardHelper.setDir(getPackageName().toString());
+        
+        // 设置单击按钮时打开文件对话框
+        findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				Bundle bundle = new Bundle();
+	            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+				showDialog(openfileDialogId,bundle);
+			}
+		});
+        
+        // 数据持久化
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        mLastOpenFileName = settings.getString("lastOpenFileName",SdcardHelper.getWriteDir()+"/tmp.lua");
+        TextView title = (TextView)findViewById(R.id.titlebarText);
+        title.setText(SdcardHelper.getFileNameFromPath(mLastOpenFileName));
+        File file = new File(mLastOpenFileName);
+        if (!file.exists()) {
+        	try {
+				file.createNewFile();
+				FileOutputStream out = new FileOutputStream(file);
+				out.write("print('hello lua');".getBytes("utf-8"));
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+
+		source = (EditText) findViewById(R.id.editText);
+		boolean canHighlight = KeywordHighlight.loadHighlight(this, "t.lua");
+	    if (canHighlight) {
+	    	System.out.println("can hightlight it");
+	    }
+        StringBuffer strb = SdcardHelper.getFileToString(mLastOpenFileName);
+		SpannableStringBuilder sp = new SpannableStringBuilder(strb);
+		KeywordHighlight.clearHighlight();
+		KeywordHighlight.setHighlight(sp,0,sp.length(),0);
+		source.setText(sp);
+		source.addTextChangedListener(new watcher());
+        
         /*
         mWebView = (WebView)findViewById(R.id.webView);
         WebSettings webSettings = mWebView.getSettings();
@@ -82,30 +183,20 @@ public class MainActivity extends Activity {
         	 @Override
         	 public void onClick(View arg0) {
         			String src = source.getText().toString();
-        			status.setText("");
         			try {
         				String res = evalLua(src);
-        				status.append(res);
-        				status.append("Finished succesfully");
+        				Toast.makeText(MainActivity.this, "Finished succesfully", Toast.LENGTH_LONG).show();			
+        				Intent intent = new Intent();
+        				intent.setClass(MainActivity.this,ResultActivity.class);
+        				Bundle bundle = new Bundle();
+        	            bundle.putString("result", res);
+        	            intent.putExtras(bundle);
+        				startActivity(intent);
         			} catch(LuaException e) {			
         				Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();			
         			}
         	 }
          });
-
-		source = (EditText) findViewById(R.id.editText);
-		boolean canHighlight = KeywordHighlight.loadHighlight(this, "t.lua");
-	    if (canHighlight) {
-	    	System.out.println("can hightlight it");
-	    }
-		String str = "local t=1\nlocal a=t";
-		SpannableStringBuilder sp = new SpannableStringBuilder(str);
-		KeywordHighlight.setHighlight(sp,0,sp.length(),0);
-		source.setText(sp);
-		source.addTextChangedListener(new watcher());
-
-		status = (TextView) findViewById(R.id.statusText);
-		//status.setMovementMethod(ScrollingMovementMethod.getInstance());
 
 		handler = new Handler();
 
@@ -178,19 +269,13 @@ public class MainActivity extends Activity {
 			L.setField(-2, "path");            // package
 			L.pop(1);
 		} catch (Exception e) {
-			status.setText("Cannot override print");
+			Toast.makeText(MainActivity.this, "Cannot override print", Toast.LENGTH_LONG).show();			
 		}
     }
 	class watcher implements TextWatcher{
 		@Override
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
 			KeywordHighlight.setHighlight((SpannableStringBuilder)s,start,start+count,start+before);
-			System.out.print(start);
-			System.out.print(",");
-			System.out.print(start+before);
-			System.out.print(",");
-			System.out.print(start+count);
-			System.out.print("\n");
 		}
 		@Override
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -255,7 +340,7 @@ public class MainActivity extends Activity {
 		private void show(final String s) {
 			handler.post(new Runnable() {
 				public void run() {
-					status.setText(s);
+    				Toast.makeText(MainActivity.this, s, Toast.LENGTH_LONG).show();			
 				}
 			});
 		}
@@ -294,14 +379,14 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		serverThread = new ServerThread();
-		serverThread.start();
+		//serverThread = new ServerThread();
+		//serverThread.start();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		serverThread.stopped = true;
+		//serverThread.stopped = true;
 	}
 	private String errorReason(int error) {
 		switch (error) {
@@ -335,15 +420,5 @@ public class MainActivity extends Activity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    final class Js {
-        Js() {
-        }
-        public String getCodeString() {
-            mWebView.loadUrl("javascript:getCodeString()");
-            System.out.println("hello js");
-            return "";
-        }
     }
 }
