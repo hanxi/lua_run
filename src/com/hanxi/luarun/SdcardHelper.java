@@ -2,6 +2,8 @@ package com.hanxi.luarun;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import android.os.Environment;
@@ -55,6 +57,25 @@ public class SdcardHelper {
 		int last = path.lastIndexOf('/');
 		String fileName = path.substring(last+1,path.length());
 		return fileName;
+	}
+	
+	static public boolean writeStringToFile(String fileName, String str) {
+		try {
+	        File file = new File(fileName);
+			FileOutputStream out;
+			out = new FileOutputStream(file);
+			out.write(str.getBytes());
+			out.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 	
 	static public StringBuffer getFileToString(String path) {

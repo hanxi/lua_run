@@ -4,10 +4,17 @@
     <string name="app_name">luaRun</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="run_lua">执行</string>
+    <string name="run_lua">运行</string>
     <string name="back">返回</string>
     <string name="open">打开</string>
+    <string name="newfile">新建</string>
     <string name="openfile">打开文件</string>
+    <string name="savefile">保存文件</string>
+    <string name="save">保存</string>
+    <string name="savesuccess">保存成功</string>
+    <string name="savefaild">保存失败</string>
+    <string name="nosavering">未保存</string>
+    <string name="nosavetext">正在编辑的内容未保存，是否先保存？</string>
+    <string name="nosave">不保存</string>    
     
-
 </resources>

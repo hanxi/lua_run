@@ -1,6 +1,7 @@
 package com.hanxi.luarun;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +13,7 @@ import android.view.Window;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View.OnClickListener;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
@@ -25,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -41,7 +44,7 @@ import java.util.Map;
 
 import org.keplerproject.luajava.*;
 import org.openfiledialog.CallbackBundle;
-import org.openfiledialog.OpenFileDialog;
+import org.openfiledialog.FileDialog;
 
 import com.hanxi.luarun.KeywordHighlight;
 
@@ -51,9 +54,12 @@ public class MainActivity extends Activity {
     private WebView mWebView;
 	private final static int LISTEN_PORT = 3333;
 	static private int openfileDialogId = 0;
+	static private int savefileDialogId = 1;
+	private static String TMP_FILE_NAME =  "./tmp.lua";
 
 	Button execute;
 	private String mLastOpenFileName;
+	private boolean mIsSave = true;
 	
 	// public so we can play with these from Lua
 	public EditText source;
@@ -80,24 +86,17 @@ public class MainActivity extends Activity {
 			String curPath = bundle.getString("curPath");
 			Map<String, Integer> images = new HashMap<String, Integer>();
 			// 下面几句设置各文件类型的图标， 需要你先把图标添加到资源文件夹
-			images.put(OpenFileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
-			images.put(OpenFileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
-			images.put(OpenFileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
+			images.put(FileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
+			images.put(FileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
+			images.put(FileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
 			images.put("wav", R.drawable.filedialog_wavfile);	//wav文件图标
 			images.put("lua", R.drawable.filedialog_luafile);	//lua文件图标
-			images.put(OpenFileDialog.sEmpty, R.drawable.filedialog_root);
-			Dialog dialog = OpenFileDialog.createDialog(id, this, this.getString(R.string.openfile), new CallbackBundle() {
+			images.put(FileDialog.sEmpty, R.drawable.filedialog_root);
+			Dialog dialog = FileDialog.createOpenDialog(id, this, this.getString(R.string.openfile), new CallbackBundle() {
 				@Override
 				public void callback(Bundle bundle) {
-					String filepath = bundle.getString("path");
-					mLastOpenFileName = filepath;
-			        StringBuffer strb = SdcardHelper.getFileToString(filepath);
-					SpannableStringBuilder sp = new SpannableStringBuilder(strb);
-					KeywordHighlight.clearHighlight();
-					KeywordHighlight.setHighlight(sp,0,sp.length(),0);
-					source.setText(sp);
-			        TextView title = (TextView)findViewById(R.id.titlebarText);
-			        title.setText(SdcardHelper.getFileNameFromPath(filepath));
+					String fileName = bundle.getString("path");
+					openFile(fileName);
 				}
 			}, 
 			".lua;",
@@ -105,9 +104,53 @@ public class MainActivity extends Activity {
 			curPath);
 			return dialog;
 		}
+		else if (id==savefileDialogId) {
+			String curPath = bundle.getString("curPath");
+			String content = bundle.getString("content");
+			Map<String, Integer> images = new HashMap<String, Integer>();
+			// 下面几句设置各文件类型的图标， 需要你先把图标添加到资源文件夹
+			images.put(FileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
+			images.put(FileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
+			images.put(FileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
+			images.put("wav", R.drawable.filedialog_wavfile);	//wav文件图标
+			images.put("lua", R.drawable.filedialog_luafile);	//lua文件图标
+			images.put(FileDialog.sEmpty, R.drawable.filedialog_root);
+			Dialog dialog = FileDialog.createSaveDialog(id, this, this.getString(R.string.savefile), new CallbackBundle() {
+				@Override
+				public void callback(Bundle bundle) {
+					String fileName = bundle.getString("path");
+					openFile(fileName);
+				}
+			}, 
+			".lua;",
+			images,
+			curPath,
+			content, new CallbackBundle() {
+				@Override
+				public void callback(Bundle bundle) {
+					String fileName = bundle.getString("fileName");
+					openFile(fileName);
+			    	mIsSave = true;
+				}
+			}
+			);
+			return dialog;			
+		}
 		return null;
 	}
-	
+
+	private void openFile(String fileName) {
+        StringBuffer strb = SdcardHelper.getFileToString(fileName);
+		SpannableStringBuilder sp = new SpannableStringBuilder(strb);
+		KeywordHighlight.clearHighlight();
+		KeywordHighlight.setHighlight(sp,0,sp.length(),0);
+		source.setText(sp);
+        TextView title = (TextView)findViewById(R.id.titlebarText);
+        title.setText(SdcardHelper.getFileNameFromPath(fileName));
+        mLastOpenFileName = fileName;
+        mIsSave = true;
+        System.out.println("misSave1=true");
+	}
     @Override
     protected void onStop(){
        super.onStop();
@@ -120,6 +163,27 @@ public class MainActivity extends Activity {
       editor.commit();
     }
 
+    private void saveFile() {
+		Editable strb = source.getText();
+		String content = strb.toString();
+		if (mLastOpenFileName.equals(TMP_FILE_NAME)) {
+			// 另存为
+			Bundle bundle = new Bundle();
+            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+			bundle.putString("content", content);
+			showDialog(savefileDialogId,bundle);
+		}
+		else {
+			if (SdcardHelper.writeStringToFile(mLastOpenFileName,content)) {
+				Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savesuccess), Toast.LENGTH_LONG).show();			
+		    	mIsSave = true;
+			}
+			else {
+				Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savefaild), Toast.LENGTH_LONG).show();			
+			}
+		}
+		System.out.println(mLastOpenFileName);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -128,20 +192,70 @@ public class MainActivity extends Activity {
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
 
         SdcardHelper.setDir(getPackageName().toString());
+    	TMP_FILE_NAME =  SdcardHelper.getWriteDir()+"/tmp.lua";
+    	mIsSave = true;
         
         // 设置单击按钮时打开文件对话框
         findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				Bundle bundle = new Bundle();
-	            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
-				showDialog(openfileDialogId,bundle);
+				if (mIsSave) {					
+					Bundle bundle = new Bundle();
+		            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+					showDialog(openfileDialogId,bundle);
+				}
+				else {
+					AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+					builder.setTitle(MainActivity.this.getString(R.string.nosavering));
+					builder.setMessage(MainActivity.this.getString(R.string.nosavetext));
+					builder.setPositiveButton(MainActivity.this.getString(R.string.nosave), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int whitch) {
+							Bundle bundle = new Bundle();
+				            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+							showDialog(openfileDialogId,bundle);
+						}
+					});
+					// 系统只提供三个对话框按钮,区别是默认的显示位置,Neutral在中间
+					builder.setNegativeButton(MainActivity.this.getString(R.string.save), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int whitch) {
+							saveFile();
+						}
+					});
+					AlertDialog dialog = builder.create();
+					dialog.show();//记得加上show()方法
+				}
 			}
 		});
-        
+
+        // 设置保存按钮事件
+        findViewById(R.id.btnSave).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				saveFile();
+			}
+		});
+
+        // 设置新建按钮事件
+        findViewById(R.id.btnNew).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				Editable strb = source.getText();
+				String content = strb.toString();
+				if (!SdcardHelper.writeStringToFile(mLastOpenFileName,content)) {
+					Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savefaild), Toast.LENGTH_LONG).show();			
+				}
+				openFile(TMP_FILE_NAME);
+				source.setText("");
+				mLastOpenFileName = TMP_FILE_NAME;
+				System.out.println(mLastOpenFileName);
+			}
+		});
+
         // 数据持久化
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        mLastOpenFileName = settings.getString("lastOpenFileName",SdcardHelper.getWriteDir()+"/tmp.lua");
+        mLastOpenFileName = settings.getString("lastOpenFileName",TMP_FILE_NAME);
         TextView title = (TextView)findViewById(R.id.titlebarText);
         title.setText(SdcardHelper.getFileNameFromPath(mLastOpenFileName));
         File file = new File(mLastOpenFileName);
@@ -174,7 +288,7 @@ public class MainActivity extends Activity {
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         mWebView.requestFocus();
-        mWebView.loadUrl("file:///android_asset/code_editor.html");
+        mWebView.loadUrl("file:///android_asset/sourcecode_editor.html");
         mWebView.addJavascriptInterface(mJs, "Java");
 */
 		execute = (Button)findViewById(R.id.btnRun);
@@ -276,6 +390,8 @@ public class MainActivity extends Activity {
 		@Override
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
 			KeywordHighlight.setHighlight((SpannableStringBuilder)s,start,start+count,start+before);
+	    	mIsSave = false;
+	        System.out.println("misSave2=false");
 		}
 		@Override
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {

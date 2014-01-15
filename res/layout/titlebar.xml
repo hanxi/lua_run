@@ -13,13 +13,6 @@
         android:layout_marginLeft="5dp"
         android:text="@string/open" />
     
-    <TextView
-        android:id="@+id/titlebarText"        
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="@string/app_name" />
-    
     <Button
         android:id="@+id/btnRun"
         android:layout_width="wrap_content"
@@ -28,5 +21,30 @@
         android:layout_centerVertical="true"
         android:layout_marginRight="5dp"
         android:text="@string/run_lua" />
+
+    <Button
+        android:id="@+id/btnNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/btnOpen"
+        android:layout_alignBottom="@+id/btnOpen"
+        android:layout_toRightOf="@+id/btnOpen"
+        android:text="@string/newfile" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/btnNew"
+        android:text="@string/save" />
+
+    <TextView
+        android:id="@+id/titlebarText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/btnSave"
+        android:text="@string/app_name" />
     
 </RelativeLayout>
