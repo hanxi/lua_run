@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Lua: download</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="lua.css">
+<LINK REL="stylesheet" TYPE="text/css" HREF="lua2.css">
+<META HTTP-EQUIV="content-type" CONTENT="text/html; charset=iso-8859-1">
+</HEAD>
+
+<BODY>
+
+<HR>
+<H1>
+<A HREF="home.html"><IMG SRC="images/logo.gif" ALT="Lua" BORDER=0></A>
+Download
+</H1>
+
+<A HREF="ftp/lua-5.2.3.tar.gz">source</A>
+&middot;
+<A HREF="http://luabinaries.luaforge.net/">binaries</A>
+&middot;
+<A HREF="bugs.html">patches</A>
+&middot;
+<A HREF="work/">previews</A>
+&middot;
+<A HREF="images/">logos</A>
+&middot;
+<A HREF="#tools">tools</A>
+&middot;
+<A HREF="tests/5.2/">test suites</A>
+&middot;
+<A HREF="license.html">license</A>
+&middot;
+<A HREF="versions.html">versions</A>
+&middot;
+<A HREF="donations.html">donations</A>
+&middot;
+<A HREF="demo.html">live demo</A>
+
+<P>
+<TABLE>
+<TR>
+<TD WIDTH="45%">
+<H2><A NAME="source">Source</A></H2>
+<P>
+Lua is
+<A HREF="license.html">free software</A>
+distributed in
+<A HREF="ftp/">source code</A>.
+It may be used for any purpose, including commercial purposes,
+at absolutely no cost.
+
+<P>
+All
+<A HREF="versions.html">versions</A>
+are available for
+<A HREF="ftp/">download</A>.
+
+The current version is
+<A HREF="versions.html#5.2">Lua 5.2</A>
+and its current release is
+<A HREF="ftp/lua-5.2.3.tar.gz">Lua&nbsp;5.2.3</A>.
+
+<P>
+<TABLE>
+<TR>
+<TD>
+<BUTTON onclick="window.location.href='ftp/lua-5.2.3.tar.gz'">download</BUTTON>
+<TD STYLE="padding-left: 1em">
+<SMALL STYLE="color: gray">
+    lua-5.2.3.tar.gz
+<BR>2013-11-11, 246K
+<BR>md5:&nbsp;dc7f94ec6ff15c985d2d6ad0f1b35654
+<BR>sha1:&nbsp;926b7907bc8d274e063d42804666b40a3f3c124c
+</SMALL>
+</TABLE>
+
+<H2><A NAME="tools">Tools</A></H2>
+<P>
+The
+<A HREF="http://lua-users.org/wiki/">lua-users wiki</A>
+lists many
+<A HREF="http://lua-users.org/wiki/LuaAddons">user-contributed addons</A>
+for Lua,
+including
+tools, libraries, full distributions, and
+<A HREF="http://lua-users.org/wiki/LuaBinaries">binaries</A>
+for several platforms.
+<A HREF="http://luaforge.net/">LuaForge</A>
+is the major repository for user-contributed tools,
+and includes
+<A HREF="http://luabinaries.luaforge.net/">LuaBinaries</A>,
+a complete repository of pre-compiled Lua libraries and executables.
+Many Lua modules are available as
+<A HREF="http://luarocks.org/">LuaRocks</A>.
+See also the
+<A HREF="https://lua-toolbox.com/">Lua Toolbox</A>.
+
+<TD CLASS="gutter">
+<TD>
+
+<H2><A NAME="building">Building</A></H2>
+<P>
+Lua is implemented in pure ANSI C
+and compiles unmodified in all platforms that have an ANSI C compiler.
+Lua also compiles cleanly as C++.
+
+<P>
+Lua is very easy to build and install.
+There are
+<A HREF="manual/5.2/readme.html">detailed instructions</A>
+in the package
+but here is a simple terminal session that
+downloads the current release of Lua
+and builds it in Linux:
+<PRE STYLE="padding-left: 1em">
+curl -R -O http://www.lua.org/ftp/lua-5.2.3.tar.gz
+tar zxf lua-5.2.3.tar.gz
+cd lua-5.2.3
+make linux test
+</PRE>
+For Mac OS X, use <CODE>make macosx test</CODE>.
+
+<P>
+If you have trouble building Lua,
+<A HREF="faq.html#1.1">read the FAQ</A>.
+
+<H2><A NAME="binaries">Binaries</A></H2>
+<P>
+If you don't have the time or the inclination to compile Lua yourself,
+<A HREF="http://lua-users.org/wiki/LuaBinaries">get a binary</A>
+or try the
+<A HREF="demo.html">live demo</A>.
+If you use Windows,
+try
+<A HREF="http://luaforwindows.luaforge.net/">Lua for Windows</A>,
+an easy-to-use distribution of Lua packed with several useful libraries.
+Try also
+<A HREF="http://luadist.org/">LuaDist</A>,
+a multi-platform distribution of the Lua that includes batteries.
+
+<TR>
+<TD>
+<H2>Giving credit</H2>
+<P>
+If you use Lua,
+please give us credit,
+according to our
+<A HREF="license.html">license</A>.
+A nice way to give us further credit is to include a
+<A HREF="images/">Lua logo</A>
+and a
+<A HREF="http://www.lua.org/">link to our site</A>
+in a web page for your product.
+
+<TD CLASS="gutter">
+<TD>
+<H2>Supporting Lua</H2>
+<P>
+You can help to
+<A HREF="donations.html">support the Lua project</A>
+by
+<A HREF="donations.html#books">buying a book</A>
+or by making a
+<A HREF="donations.html#donation">donation</A>.
+
+<P>
+You can also help to spread the word about Lua by buying Lua products
+at
+<A HREF="http://www.zazzle.com/Lua_Store">Zazzle</A>,
+<A HREF="http://www.cafepress.com/lualang">CafePress</A>,
+and
+<A HREF="http://www.fibers.com/shop/Lua">Fibers</A>.
+
+<P>
+<A HREF="http://astore.amazon.com/lua-store-20"><IMG SRC="images/amazon.gif" ALT="[buy at the Lua Bookstore at Amazon]" BORDER=0 TITLE="buy at the Lua Bookstore at Amazon"></A>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<A HREF="donations.html#donation"><IMG SRC="images/donate.gif" ALT="[make a donation to the Lua project]" BORDER=0 TITLE="make a donation to the Lua project"></A>
+</TR>
+</TABLE>
+
+<HR>
+<SMALL CLASS="footer">
+Last update:
+Fri Dec  6 10:40:12 BRST 2013
+</SMALL>
+<!--
+Last change: Lua 5.2.3 released
+-->
+
+</BODY>
+</HTML>

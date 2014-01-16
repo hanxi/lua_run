@@ -50,7 +50,7 @@ public class FileDialog {
 		//	其他的直接根据后缀进行索引，比如.wav文件图标的索引为"wav"
 	public static Dialog createSaveDialog(int id, Context context, String title, CallbackBundle callback, String suffix, Map<String, Integer> images,
 			final String path, final String content,
-			final CallbackBundle callbackSaveSucess){
+			final CallbackBundle callbackSaveSucess) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		final SaveDialogLayout saveDialogLayout = new SaveDialogLayout(context);
 		LinearLayout openLayout = (LinearLayout) saveDialogLayout.findViewById(R.id.openLayout);

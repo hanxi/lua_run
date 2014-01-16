@@ -8,8 +8,8 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View.OnClickListener;
@@ -17,23 +17,21 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.System;
@@ -41,6 +39,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+
+import net.youmi.android.smart.SmartBannerManager;
+import net.youmi.android.spot.SpotManager;
 
 import org.keplerproject.luajava.*;
 import org.openfiledialog.CallbackBundle;
@@ -51,7 +52,6 @@ import com.hanxi.luarun.KeywordHighlight;
 public class MainActivity extends Activity {
 	public static final String PREFS_NAME = "MyPrefsFile";
 	
-    private WebView mWebView;
 	private final static int LISTEN_PORT = 3333;
 	static private int openfileDialogId = 0;
 	static private int savefileDialogId = 1;
@@ -118,8 +118,23 @@ public class MainActivity extends Activity {
 			Dialog dialog = FileDialog.createSaveDialog(id, this, this.getString(R.string.savefile), new CallbackBundle() {
 				@Override
 				public void callback(Bundle bundle) {
-					String fileName = bundle.getString("path");
-					openFile(fileName);
+					final String fileName = bundle.getString("path");
+					// 文件已存在是否覆盖
+					AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+					builder.setTitle(MainActivity.this.getString(R.string.fileexist));
+					builder.setMessage(MainActivity.this.getString(R.string.fileexisttext));
+					builder.setPositiveButton(MainActivity.this.getString(R.string.cover), new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int whitch) {
+							mLastOpenFileName = fileName;
+							saveFile();
+							openFile(fileName);
+						}
+					});
+					// 系统只提供三个对话框按钮,区别是默认的显示位置,Neutral在中间
+					builder.setNegativeButton(MainActivity.this.getString(R.string.notcover), null);
+					AlertDialog dialog = builder.create();
+					dialog.show();//记得加上show()方法
 				}
 			}, 
 			".lua;",
@@ -184,19 +199,32 @@ public class MainActivity extends Activity {
 		}
 		System.out.println(mLastOpenFileName);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.activity_main);
-        getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar);
+		SysApplication.getInstance().addActivity(this); 
 
+        RelativeLayout mBarView = (RelativeLayout)View.inflate(this, R.layout.titlebar, null);
+        LinearLayout mLinearLayout = (LinearLayout)findViewById(R.id.titlebar);
+        mLinearLayout.addView(mBarView);  
+        
         SdcardHelper.setDir(getPackageName().toString());
     	TMP_FILE_NAME =  SdcardHelper.getWriteDir()+"/tmp.lua";
     	mIsSave = true;
-        
+    	
+    	boolean checkResult = net.youmi.android.spot.SpotManager.checkSpotAdConfig(this); 
+    	if (checkResult) {
+    		System.out.println("检查无积分插播广告配置OK");
+    	}
+    	checkResult = net.youmi.android.smart.SmartBannerManager.checkSmartBannerAdConfig(this); 
+    	if (checkResult) {
+    		System.out.println("检查无积分广告配置OK");
+    	}
+    	
         // 设置单击按钮时打开文件对话框
-        findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
+        this.findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
 				if (mIsSave) {					
@@ -283,32 +311,26 @@ public class MainActivity extends Activity {
 		source.setText(sp);
 		source.addTextChangedListener(new watcher());
         
-        /*
-        mWebView = (WebView)findViewById(R.id.webView);
-        WebSettings webSettings = mWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        mWebView.requestFocus();
-        mWebView.loadUrl("file:///android_asset/sourcecode_editor.html");
-        mWebView.addJavascriptInterface(mJs, "Java");
-*/
 		execute = (Button)findViewById(R.id.btnRun);
         //绑定匿名的监听器，并执行您所要在点击按钮后执行的逻辑代码
         execute.setOnClickListener(new View.OnClickListener() {
         	 @Override
         	 public void onClick(View arg0) {
         			String src = source.getText().toString();
+        			String res = "";
         			try {
-        				String res = evalLua(src);
-        				Toast.makeText(MainActivity.this, "Finished succesfully", Toast.LENGTH_LONG).show();			
-        				Intent intent = new Intent();
-        				intent.setClass(MainActivity.this,ResultActivity.class);
-        				Bundle bundle = new Bundle();
-        	            bundle.putString("result", res);
-        	            intent.putExtras(bundle);
-        				startActivity(intent);
+        				res = evalLua(src);
+        				Toast.makeText(MainActivity.this, R.string.run_finished, Toast.LENGTH_LONG).show();			
         			} catch(LuaException e) {			
+        				res = e.getMessage();
         				Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();			
         			}
+    				Intent intent = new Intent();
+    				intent.setClass(MainActivity.this,ResultActivity.class);
+    				Bundle bundle = new Bundle();
+    	            bundle.putString("result", res);
+    	            intent.putExtras(bundle);
+    				startActivity(intent);
         	 }
          });
 
@@ -537,4 +559,24 @@ public class MainActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+    
+	@Override 
+    public boolean onKeyDown(int keyCode, KeyEvent event) { 
+		if (keyCode == KeyEvent.KEYCODE_BACK) { 
+			pressAgainExit();
+			return true;
+        } 
+        return super.onKeyDown(keyCode, event); 
+    } 
+	
+    private void pressAgainExit() { 
+        if (Exit.isExit()) { 
+        	SysApplication.getInstance().exit();
+        } else { 
+            Toast.makeText(getApplicationContext(), R.string.exit_again, 
+            		Integer.valueOf(R.string.exit_time)).show(); 
+            Exit.doExitInOneSecond(); 
+        } 
+    }
+
 }

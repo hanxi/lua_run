@@ -17,25 +17,84 @@
 	<uses-permission android:name="android.permission.CAMERA"/>
 	<uses-permission android:name="android.permission.VIBRATE"/>
 	<uses-permission android:name="android.permission.READ_SMS"/>
-    
+	<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.GET_TASKS"/>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name">
-        <activity
-            android:name="com.hanxi.luarun.MainActivity"
-            android:label="@string/app_name"
-            android:theme="@style/MyTheme">
+        android:label="@string/app_name"
+    	android:theme="@style/MyTheme">
+        
+        <activity android:name=".MainTabActivity"
+                  android:label="@string/app_name"
+            	  android:theme="@style/MyTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 
+         -->
         <activity
-            android:name=".ResultActivity"
-            android:label="@string/app_name"
+            android:name=".MainActivity"
             android:theme="@style/MyTheme">
         </activity>
-    </application>
+        <activity
+            android:name=".ResultActivity"
+            android:theme="@style/MyTheme">
+        </activity>
+        
+        <activity
+            android:name=".HelpActivity"
+            android:theme="@style/MyTheme">
+        </activity>
 
+        <activity
+            android:name=".DocActivity"
+            android:theme="@style/MyTheme">
+        </activity>
+
+        <activity
+            android:name=".SetActivity"
+            android:theme="@style/MyTheme">
+        </activity>
+        
+
+    <activity
+        android:name="net.youmi.android.AdBrowser"
+        android:configChanges="keyboard|keyboardHidden|orientation"            
+        android:theme="@android:style/Theme.Light.NoTitleBar" >
+    </activity>
+    <service
+        android:name="net.youmi.android.AdService"
+        android:exported="false" >
+    </service>
+    <receiver 
+        android:name="net.youmi.android.AdReceiver" >
+        <intent-filter>
+            <action android:name="android.intent.action.PACKAGE_ADDED" />
+            <data android:scheme="package" />
+        </intent-filter>
+    </receiver> 
+    <activity
+    android:name="net.youmi.android.SmartBannerActivity"
+    android:configChanges="keyboard|keyboardHidden|orientation"
+    android:theme="@style/Transparent">        
+    </activity>
+    <service
+    android:name="net.youmi.android.SmartBannerService"
+    android:exported="false">        
+    </service>
+    
+    <meta-data android:name="YOUMI_CHANNEL"
+                android:value="10190" >
+    </meta-data>
+    
+    </application>
+    
 </manifest>

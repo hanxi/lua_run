@@ -1,0 +1,19 @@
+td {
+	text-align: justify ;
+	vertical-align: top ;
+	padding-bottom: 1em ;
+}
+
+table h2 {
+	margin-left: 0px ;
+	text-align: left ;
+}
+
+table h3 {
+	padding-left: 0.5em ;
+	border-left: solid #D0D0FF 1em ;
+}
+
+td.gutter {
+	width: 5% ;
+}

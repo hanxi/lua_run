@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen 
+	xmlns:android="http://schemas.android.com/apk/res/android" 
+	android:title="Settings">
+	<PreferenceCategory 
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:title="Emotions"
+		android:summary="settings about emotions">
+		<CheckBoxPreference  
+			android:title="Love me?" 
+			android:summaryOn="Yes,I love you!"
+			android:summaryOff="No,I am sorry."
+			android:defaultValue="true">
+		</CheckBoxPreference>
+		<CheckBoxPreference 
+			android:title="Hate me?" 
+			android:summaryOn="Yes,I hate you!"
+			android:summaryOff="No,you are a good person."
+			android:defaultValue="false">
+		</CheckBoxPreference>		
+	</PreferenceCategory>
+	<PreferenceCategory 
+		xmlns:android="http://schemas.android.com/apk/res/android"
+		android:title="Relations"
+		android:summary="settings about relations">
+		<CheckBoxPreference 
+			android:title="Family?" 
+			android:summaryOn="Yes,we are family!"
+			android:summaryOff="No,I am sorry."
+			android:defaultValue="true">
+		</CheckBoxPreference>
+		<CheckBoxPreference 
+			android:title="Friends?" 
+			android:summaryOn="Yes,we are friends!"
+			android:summaryOff="No,I am sorry."
+			android:defaultValue="false">
+		</CheckBoxPreference>		
+	</PreferenceCategory>	
+</PreferenceScreen>

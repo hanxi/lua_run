@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<atom:link href="http://www.lua.org/news.rss" rel="self" type="application/rss+xml" />
+<title>Lua: news</title>
+<link>http://www.lua.org/news.html</link>
+<description>What's happening in the Lua world.</description>
+<lastBuildDate>Fri, 06 Dec 2013 10:58:09 -0200</lastBuildDate>
+<pubDate>Fri, 06 Dec 2013 10:58:09 -0200</pubDate>
+
+<item>
+<title>Lua 5.2.3 released</title>
+<link>http://www.lua.org/ftp/lua-5.2.3.tar.gz</link>
+<description>
+Lua 5.2.3 has been released. It fixes all known bugs in Lua 5.2.2.
+</description>
+<pubDate>
+Fri, 06 Dec 2013 10:58:09 -0200
+</pubDate>
+</item>
+
+<item>
+<title>Lua Workshop 2013 held in Toulouse</title>
+<link>http://www.lua.org/wshop13.html</link>
+<description>
+Lua Workshop 2013 held in Toulouse, France,
+as part of Le Capitole du Libre.
+</description>
+<pubDate>
+Sat, 23 Nov 2013 08:00:00 -0200
+</pubDate>
+</item>
+
+<item>
+<title>20 years of Lua</title>
+<link>http://lua-users.org/lists/lua-l/2013-07/msg00846.html</link>
+<description>
+We commemorate 20 years of the first version of Lua today.
+</description>
+<pubDate>
+Sun, 28 Jul 2013 20:07:52 -0300
+</pubDate>
+</item>
+
+<item>
+<title>Roberto receives award for Lua</title>
+<link>http://www.sbc.org.br/index.php?option=com_content&amp;view=article&amp;id=1235:premiacoexxxiii</link>
+<description>
+Roberto Ierusalimschy, chief architect of Lua, received the Scientific Merit Award of the Brazilian Computer Society for his work on Lua.
+</description>
+<pubDate>
+Fri, 02 Aug 2013 08:30:55 -0300
+</pubDate>
+</item>
+
+<item>
+<title>Lua Workshop 2013 to be held in Toulouse</title>
+<link>http://www.lua.org/wshop13.html</link>
+<description>
+The Lua Workshop 2013 will be held in Toulouse, France,
+on November 23-24, 2013,
+as part of Le Capitole du Libre.
+</description>
+<pubDate>
+Fri, 12 Jul 2013 21:24:08 -0300
+</pubDate>
+</item>
+
+<item>
+<title>Programming in Lua now available as an e-book</title>
+<link>http://store.feistyduck.com/products/programming-in-lua</link>
+<description>
+The book "Programming in Lua" (3rd edition) is now available as an e-book through Feisty Duck.
+</description>
+<pubDate>
+Tue, 14 May 2013 20:16:32 -0300
+</pubDate>
+</item>
+
+<item>
+<title>Roberto gives an invited talk at WWW 2013</title>
+<link>http://www2013.org/program/why-do-we-need-multiple-languages/</link>
+<description>
+Roberto gives an invited talk "Lua versus Javascript: Why do we need multiple languages?" at WWW 2013, the 22nd International World Wide Web Conference.
+</description>
+<pubDate>
+Mon, 13 May 2013 14:44:30 -0300
+</pubDate>
+</

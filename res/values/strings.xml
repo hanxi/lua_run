@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">luaRun</string>
+    <string name="app_name">luaIDE</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="run_lua">运行</string>
@@ -16,5 +16,19 @@
     <string name="nosavering">未保存</string>
     <string name="nosavetext">正在编辑的内容未保存，是否先保存？</string>
     <string name="nosave">不保存</string>    
+    <string name="fileexist">文件已存在</string>    
+    <string name="fileexisttext">文件已存在，是否覆盖</string>    
+    <string name="cover">覆盖</string>    
+    <string name="notcover">不覆盖</string>    
     
+    <string name="main_help">帮助</string>
+    <string name="main_home">运行</string>
+    <string name="main_doc">文档</string>
+    <string name="main_set">设置</string>
+    <string name="main_ad">推荐</string>
+    
+    <string name="exit_again">再按一次退出程序</string>
+    <string name="exit_time">1000</string>
+    
+    <string name="run_finished">执行完毕</string>
 </resources>

@@ -1,0 +1,489 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Lua: documentation</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="lua.css">
+<LINK REL="stylesheet" TYPE="text/css" HREF="lua2.css">
+<META HTTP-EQUIV="content-type" CONTENT="text/html; charset=iso-8859-1">
+<STYLE TYPE="text/css">
+blockquote, li {
+	text-align: left ;
+}
+
+span.details {
+	font-size: small ;
+	display: block ;
+	margin-top: 2px ;
+}
+</STYLE>
+</HEAD>
+
+<BODY>
+
+<HR>
+<H1>
+<A HREF="home.html"><IMG SRC="images/logo.gif" ALT="Lua" BORDER=0></A>
+Documentation
+</H1>
+
+<A HREF="manual/5.2/">manual</A>
+&middot;
+<A HREF="manual/5.2/readme.html">readme</A>
+&middot;
+<A HREF="#books">books</A>
+&middot;
+<A HREF="#papers">papers</A>
+&middot;
+<A HREF="faq.html">faq</A>
+&middot;
+<A HREF="http://lua-users.org/wiki/">wiki</A>
+&middot;
+<A HREF="source/">source code</A>
+&middot;
+<A HREF="versions.html">versions</A>
+&middot;
+<A HREF="bugs.html">bugs</A>
+&middot;
+<A HREF="license.html">license</A>
+&middot;
+<A HREF="start.html">getting started</A>
+
+<P>
+<TABLE>
+<TR>
+<TD WIDTH="45%">
+<H2><A NAME="manual">Reference manual</A></H2>
+<P>
+The official definition of the Lua language is its
+<A HREF="manual/">reference manual</A>,
+which describes the syntax and the semantics of Lua,
+the standard libraries, and the C&nbsp;API.
+<P>
+
+The
+<A HREF="manual/5.2/">reference manual for Lua 5.2</A>
+is currently available in English only.
+<P>
+
+The
+<A HREF="manual/5.1/">reference manual for Lua 5.1</A>
+is available online
+in <A HREF="manual/5.1/">English</A>
+and has been translated into
+<A HREF="manual/5.1/pt/">Portuguese</A>,
+<A HREF="manual/5.1/es/">Spanish</A>,
+<A HREF="http://www.lua.ru/doc/">Russian</A>,
+<A HREF="http://thor.4242.hu/scripting/manual_hu.html">Hungarian</A>,
+and
+<A HREF="http://lua.coders-online.net/">German</A>.
+It is also available as a <A HREF="#books">book</A> in English.
+<P>
+
+<H2>Technical documentation</H2>
+<P>
+For more technical information,
+see the <A HREF="faq.html">Frequently Asked Questions (FAQ)</A>
+and some old
+<A HREF="slides.html">seminar slides</A>.
+For detailed technical information on specific topics,
+see our old series of
+<A HREF="notes/">Lua Technical Notes</A>
+and the
+<A HREF="http://lua-users.org/wiki/">wiki</A>
+at
+<A HREF="http://lua-users.org/">lua-users.org</A>,
+specially the
+<A HREF="http://lua-users.org/wiki/TutorialDirectory">tutorial</A>.
+You may also browse the
+<A HREF="source/">source code</A>.
+
+<H2><A NAME="papers">Papers</A></H2>
+<P>
+
+There are many
+<A HREF="papers.html">papers and theses</A>
+related to Lua.
+Here are the main ones written by the Lua
+<A HREF="authors.html">team</A>.
+See also the
+<A HREF="http://www.lua.inf.puc-rio.br/publications/">Lablua publications</A>.
+<P>
+
+The main academic paper about Lua
+discusses the philosophy behind its design:
+<BLOCKQUOTE>
+<A HREF="spe.html">Lua - an extensible extension language</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W. Celes,
+<BR>
+<EM>Software: Practice &amp; Experience</EM> <B>26</B> #6 (1996) 635&ndash;652.
+[<A HREF="http://dx.doi.org/10.1002/(SICI)1097-024X(199606)26:6%3C635::AID-SPE26%3E3.0.CO;2-P">doi</A>]
+</SPAN>
+<P STYLE="text-align: justify ; font-size: small ;">
+This paper was awarded the
+first prize (technological category)
+in the
+II&nbsp;Compaq Award for Research and Development in Computer Science in 1997.
+This award was a joint venture of
+Compaq Computer in Brazil,
+the
+<A HREF="http://www.mct.gov.br/">Brazilian Ministry of Science and Technology</A>,
+and the
+<A HREF="http://www.abc.org.br/">Brazilian Academy of Sciences</A>.
+</P>
+</BLOCKQUOTE>
+<P>
+
+For a recent short exposition of the API design, see
+<BLOCKQUOTE>
+<A HREF="http://queue.acm.org/detail.cfm?id=1983083">Passing a language through the eye of a needle</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W. Celes,
+<BR>
+<EM>ACM Queue</EM> <B>9</B> #5 (May 2011) 20&ndash;29.
+[<A HREF="http://doi.acm.org/10.1145/1978862.1983083">doi</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+For details on the implementation of Lua, see
+<BLOCKQUOTE>
+<A HREF="doc/jucs05.pdf">The implementation of Lua 5.0</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W. Celes,
+<BR>
+<EM>Journal of Universal Computer Science</EM> <B>11</B> #7 (2005) 1159&ndash;1176.
+[<A HREF="http://www.jucs.org/jucs_11_7/the_implementation_of_lua">jucs</A>
+&middot;
+<A HREF="http://www.inf.puc-rio.br/~roberto/talks/lua5-imp.pdf">slides</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+For a complete history of Lua till 2006, see
+<BLOCKQUOTE>
+<A HREF="doc/hopl.pdf">The evolution of Lua</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W. Celes,
+<BR>
+Proceedings of
+<A HREF="http://www.acm.org/sigs/sigplan/hopl"><EM>
+ACM HOPL III</EM></A> (2007) 2-1&ndash;2-26.
+[<A HREF="http://doi.acm.org/10.1145/1238844.1238846">doi</A>
+&middot;
+<A HREF="http://www.inf.puc-rio.br/~roberto/talks/hopl-slides.pdf">slides</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+For a history of Lua till 2001, see
+<BLOCKQUOTE>
+<A HREF="history.html">The evolution of an extension language:
+a history of Lua</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W. Celes,
+<BR>
+<EM>Proceedings of V Brazilian Symposium on Programming Languages</EM>
+(2001) B-14&ndash;B-28.
+[<A HREF="doc/sblp2001.ps.gz">ps</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+The first paper describing Lua has some historical interest:
+<BLOCKQUOTE>
+<A HREF="semish94.html">The design and implementation of a language for extending applications</A>
+<SPAN CLASS="details">
+by L. H. de Figueiredo, R. Ierusalimschy, W. Celes,
+<BR>
+<EM>Proceedings of XXI Brazilian Seminar on Software and Hardware</EM> (1994) 273&ndash;283.
+[<A HREF="doc/semish94.ps.gz">ps</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+For an early expository article, see
+<BLOCKQUOTE>
+<A HREF="ddj.html">Lua: an extensible embedded language</A>
+<SPAN CLASS="details">
+by L. H. de Figueiredo, R. Ierusalimschy, W. Celes,
+<BR>
+<EM>Dr. Dobb's Journal</EM> <B>21</B> #12 (Dec 1996) 26&ndash;33.
+[<A HREF="http://www.ddj.com/dept/architect/184410014">ddj</A>]
+</SPAN>
+</BLOCKQUOTE>
+<P>
+
+For a recent introductory text (in Portuguese), see
+<BLOCKQUOTE>
+<A HREF="doc/jai2009.pdf">Uma introdução à programação em Lua</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy,
+<EM>JAI 2009</EM> (Jul 2009).
+</SPAN>
+</BLOCKQUOTE>
+
+<TD CLASS="gutter">
+<TD WIDTH="45%">
+<H2><A NAME="books">Books</A></H2>
+<P>
+Lua books are available at the main online stores,
+such as the
+<A HREF="http://astore.amazon.com/lua-store-20">Lua Bookstore at Amazon</A>,
+or as e-books at
+<A HREF="http://store.feistyduck.com/">Feisty Duck</A>.
+When you buy a copy of a book published by Lua.org,
+you help to <A HREF="donations.html">support the Lua project</A>.
+
+<H3><A NAME="ref">Reference manual</A></H3>
+<P>
+The official definition of the Lua language:
+<BLOCKQUOTE>
+<A HREF="http://www.amazon.com/exec/obidos/ASIN/8590379833/lua-docs-20">
+<IMG SRC="manual/5.1/cover.png" ALT="" TITLE="buy from Amazon" BORDER=1 ALIGN="left" HSPACE=12>
+</A>
+<A HREF="manual/5.1/">Lua 5.1 Reference Manual</A>
+<SPAN CLASS="details">
+by R. Ierusalimschy, L. H. de Figueiredo, W.&nbsp;Celes,
+Lua.org, August 2006
+<BR>ISBN 8590379833
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<H3><A NAME="pil">Programming in Lua</A></H3>
+<P>
+A detailed and authoritative introduction to
+all aspects of Lua programming,
+by Lua's chief architect:
+<BLOCKQUOTE>
+<A HREF="http://www.amazon.com/exec/obidos/ASIN/859037985X/lua-docs-20">
+<IMG SRC="images/pil3.jpg" ALT="" TITLE="buy from Amazon" BORDER=1 ALIGN="left" HSPACE=12 HEIGHT=100></A>
+<A HREF="pil/">
+Programming in Lua</A>
+<SPAN CLASS="details">
+by Roberto Ierusalimschy
+<BR>Lua.org,
+third edition,
+January 2013
+<BR>ISBN 859037985X
+<BR>(also available as
+<A HREF="http://store.feistyduck.com/products/programming-in-lua">e-book</A>)
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+The third edition is aimed at Lua 5.2.
+
+The first edition was aimed at Lua 5.0 and is
+<A HREF="pil/contents.html">available online</A>;
+it is still largely relevant.
+<P>
+
+The second edition remains relevant and is available in
+German,
+Korean,
+Chinese,
+and Japanese:
+<BLOCKQUOTE>
+<A HREF="https://www.opensourcepress.de/index.php?26&tt_products=304">
+<IMG SRC="images/pil2de.png" ALT="" TITLE="" BORDER=1 ALIGN="left" HSPACE=12></A>
+<A HREF="https://www.opensourcepress.de/index.php?26&tt_products=304">
+Programmieren mit Lua</A>
+<SPAN CLASS="details">
+von Roberto Ierusalimschy
+<BR>Open Source Press, September 2006
+<BR>ISBN 3937514228
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+<A NAME="http://insightbook.springnote.com/pages/253177">
+<IMG SRC="images/pil2kr.gif" ALT="" TITLE="" BORDER=1 ALIGN="left" HSPACE=12></A>
+<A NAME="http://insightbook.springnote.com/pages/253177">
+Programming in Lua</A>
+<SPAN CLASS="details">
+by Roberto Ierusalimschy
+<BR>Insight, June 2007
+<BR>ISBN 9788991268302
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+<A NAME="http://www.phei.com.cn/bookshop/bookinfo.asp?bookcode=TP061870%20&booktype=new">
+<IMG SRC="images/pil2cn.gif" ALT="" TITLE="" BORDER=1 ALIGN="left" HSPACE=12></A>
+<A NAME="http://www.phei.com.cn/bookshop/bookinfo.asp?bookcode=TP061870%20&booktype=new">
+Programming in Lua</A>
+<SPAN CLASS="details">
+by Roberto Ierusalimschy
+<BR>Publishing House of Electronic Industry, May 2008
+<BR>ISBN 9787121061875
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+<A HREF="http://www.amazon.co.jp/Programming-Lua-%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E8%A8%80%E8%AA%9ELua%E5%85%AC%E5%BC%8F%E8%A7%A3%E8%AA%AC%E6%9B%B8-Roberto-Ierusalimschy/dp/4048677977/ref=sr_1_1?ie=UTF8&s=books&qid=1255103728&sr=1-1">
+<IMG SRC="images/pil2jp.jpg" ALT="" TITLE="" BORDER=1 ALIGN="left" HSPACE=12></A>
+<A HREF="http://www.amazon.co.jp/Programming-Lua-%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E8%A8%80%E8%AA%9ELua%E5%85%AC%E5%BC%8F%E8%A7%A3%E8%AA%AC%E6%9B%B8-Roberto-Ierusalimschy/dp/4048677977/ref=sr_1_1?ie=UTF8&s=books&qid=1255103728&sr=1-1">
+Programming in Lua</A>
+<SPAN CLASS="details">
+by Roberto Ierusalimschy
+<BR>ASCII Media Works, Aug 2009
+<BR>ISBN 9784048677974
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<H3><A NAME="gems">Lua Programming Gems</A></H3>
+<P>
+A collection of articles recording some of the existing wisdom and practice on how to program well in Lua:
+<BLOCKQUOTE>
+<A HREF="http://www.amazon.com/exec/obidos/ASIN/8590379841/lua-docs-20">
+<IMG SRC="gems/icon.png" ALT="" TITLE="buy from Amazon" BORDER=1 ALIGN="left" HSPACE=12 WIDTH=75>
+</A>
+<A HREF="gems/">Lua Programming Gems</A>
+<SPAN CLASS="details">
+edited by L. H. de Figueiredo, W. Celes, R.&nbsp;Ierusalimschy,
+Lua.org, December 2008
+<BR>ISBN 9788590379843
+<BR>(also available as
+<A HREF="http://store.feistyduck.com/products/lua-programming-gems-ebook">e-book</A>)
+</SPAN>
+<BR CLEAR="all">
+</BLOCKQUOTE>
+
+<H3><A NAME="otherbooks">Other books</A></H3>
+<P>
+There are also books about Lua written by other authors:
+<UL>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1782161600/lua-docs-20">LÖVE for Lua Game Programming</A>
+<SPAN CLASS="details">
+by Darmie Akinlaja.
+Packt Publishing, 2013, ISBN&nbsp;1782161600.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1481927655/lua-docs-20">ComputerCraft: Lua Programming in Minecraft</A>
+<SPAN CLASS="details">
+by Matthew Monk and Simon Monk.
+CreateSpace, 2013, ISBN&nbsp;1481927655.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1430246626/lua-docs-20">Learn Lua for iOS Game Development</A>
+<SPAN CLASS="details">
+by Jayant Varma.
+Apress, 2012, ISBN&nbsp;1430246626.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.d-booker.fr/programmation-et-langage/1-livre-lua.html">Le guide de Lua et ses applications</A>
+<SPAN CLASS="details">
+by Cyril Doillon, Sylvain Fabre, Philippe Lhoste, and Patrick Rapin.
+Éditions D-BookeR, 2012, ISBN&nbsp;9782822700054.
+</SPAN>
+<P>
+
+<LI><A HREF="https://www.agbook.com.br/book/128818--Lua__Programacao_de_Computadores">Lua - Programação de Computadores</A>
+<SPAN CLASS="details">
+by José Augusto N. G. Manzano.
+self-published, 2012, ISBN&nbsp;9788591311576.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.de/Lua-Einsatz-von-Embedded-Systems/dp/3907857151/">Lua: Einsatz von Lua in Embedded Systems</A>
+<SPAN CLASS="details">
+by Claus Kühnel and Daniel Zwirner.
+Skript Verlag Kuehnel, June 2012, ISBN&nbsp;3907857151.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1475026048/lua-docs-20">Basic ROBLOX Lua Programming</A>
+<SPAN CLASS="details">
+by Brandon John LaRouche.
+CreateSpace, April 2012, ISBN&nbsp;1475026048.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.de/Lua-Einsatz-von-zur-Messwerterfassung/dp/3907857127">Lua: Einsatz von Lua zur Messwerterfassung</A>
+<SPAN CLASS="details">
+by Claus Kühnel and Daniel Zwirner.
+Skript Verlag Kuehnel, September 2009, ISBN&nbsp;3907857127.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1430223715/lua-docs-20">Beginning Lua with World of Warcraft Add-ons</A>
+<SPAN CLASS="details">
+by Paul Emmerich.
+Apress, July 2009, ISBN&nbsp;1430223715.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.co.jp/exec/obidos/asin/4777514137">First Lua Programming, the most popular application development lightweight script!</A>
+<SPAN CLASS="details">
+by Miki Shimizu.
+Softbank Creative, December 2008, ISBN&nbsp;4777514137.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.co.jp/exec/obidos/asin/4797348550">Scripting Language for Game Development and Efficient C/C++ to Implement Embedded Lua</A>
+<SPAN CLASS="details">
+by Makoto Hamanaka.
+Softbank Creative, September 2008, ISBN&nbsp;4797348550.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/0470229810/lua-docs-20">World of Warcraft Programming</A>
+<SPAN CLASS="details">
+by James Whitehead II, Bryan McLemore, and Matthew Orlando.
+Wiley, May 2008, ISBN&nbsp;0470229810.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.co.jp/exec/obidos/ASIN/4797342722">Introduction to Lua programming</A>
+<SPAN CLASS="details">
+by Yutaka Ueno.
+Softbank Creative, December 2007, ISBN&nbsp;4797342722.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/0470069171/lua-docs-20">Beginning Lua Programming</A>
+<SPAN CLASS="details">
+by Kurt Jung and Aaron Brown.
+Wrox, February 2007, ISBN&nbsp;0470069171.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1584504048/lua-docs-20">Game Development with Lua</A>
+<SPAN CLASS="details">
+by Paul Schuytema and Mark Manyen.
+Charles River Media, August 2005, ISBN&nbsp;1584504048.
+</SPAN>
+<P>
+
+<LI><A HREF="http://www.amazon.com/exec/obidos/ASIN/1592000770/lua-docs-20">Game Programming with Python, Lua, and Ruby</A>
+<SPAN CLASS="details">
+by Tom Gutschmidt.
+Course Technology PTR, December 2003, ISBN&nbsp;1592000770.
+</SPAN>
+
+</UL>
+
+</TR>
+</TABLE>
+
+<HR>
+<SMALL CLASS="footer">
+Last update:
+Fri Nov 22 10:37:34 BRST 2013
+</SMALL>
+<!--
+Last change: new book
+-->
+
+</BODY>
+</HTML>

@@ -1,0 +1,3041 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Lua: bugs</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="lua.css">
+<META HTTP-EQUIV="content-type" CONTENT="text/html; charset=utf-8">
+<STYLE TYPE="text/css">
+pre {
+	color: black ;
+	font-family: monospace ;
+	padding: 8px ;
+	border-radius: 8px ;
+	border: solid #a0a0a0 2px ;
+	margin-top: -1em ;
+}
+
+pre.example {
+	background-color: #F5F5DC ;
+}
+
+pre.patch {
+	background-color: #EFEFFF ;
+}
+
+span.bugs {
+	margin-left: 2em  ;
+	font-size: medium ;
+	font-style: normal ;
+}
+
+span.note {
+	color: gray ;
+	font-size: small ;
+}
+
+li :target {
+	background-color: inherit ;
+	padding: 0px ;
+	border: none ;
+}
+
+li {
+	margin-bottom: 1em ;
+}
+
+code {
+	font-size: 12pt ;
+}
+
+</STYLE>
+</HEAD>
+
+<BODY>
+
+<HR>
+<H1>
+<A HREF="home.html"><IMG SRC="images/logo.gif" ALT="Lua" BORDER=0></A>
+Bugs
+</H1>
+
+<A HREF="#5.2.2">5.2.2</A> &middot;
+<A HREF="#5.2.1">5.2.1</A> &middot;
+<A HREF="#5.2.0">5.2.0</A> &nbsp;&bull;&nbsp;
+<A HREF="#5.1.5">5.1.5</A> &middot;
+<A HREF="#5.1.4">5.1.4</A> &middot;
+<A HREF="#5.1.3">5.1.3</A> &middot;
+<A HREF="#5.1.2">5.1.2</A> &middot;
+<A HREF="#5.1.1">5.1.1</A> &middot;
+<A HREF="#5.1">5.1</A> &nbsp;&bull;&nbsp;
+<A HREF="#5.0.3">5.0.3</A> &middot;
+<A HREF="#5.0.2">5.0.2</A> &middot;
+<A HREF="#5.0">5.0</A> &nbsp;&bull;&nbsp;
+<A HREF="#4.0">4.0</A>
+<HR>
+<P>
+
+Here is a list of all bugs found in
+<A HREF="versions.html">each release</A>
+of Lua since 4.0.
+Each entry includes
+a minimal example that exhibits the bug and
+a patch or solution, when available.
+<P>
+
+Every Lua release fixes all listed bugs in previous releases,
+except where noted.
+Nevertheless,
+some bugs found in recent releases actually exist since older releases.
+<P>
+
+If you want to report a bug,
+please
+<A HREF="faq.html#2.3">read this</A>
+first.
+
+<!--
+This section will be updated soon.
+All the bugs below are fixed in the
+<A HREF="work/">upcoming Lua 5.1.3</A>.
+No bugs are known in Lua 5.1.4.
+<P>
+-->
+
+<H2><A NAME="5.2.2">Lua 5.2.2</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.2.2-1">1</A> &middot;
+<A HREF="#5.2.2-2">2</A> &middot;
+<A HREF="#5.2.2-3">3</A> &middot;
+<A HREF="#5.2.2-4">4</A> &middot;
+<A HREF="#5.2.2-5">5</A> &middot;
+<A HREF="#5.2.2-6">6</A> &middot;
+<A HREF="#5.2.2-7">7</A> &middot;
+<A HREF="#5.2.2-8">8</A>
+</SPAN>
+</H2>
+
+<OL>
+<LI>
+<A NAME="5.2.2-1"></A>Stack overflow in vararg functions with many fixed
+parameters called with few arguments.
+<BR><SPAN CLASS="note">reported by 云风 on 17 Apr 2013.
+existed since 5.1.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">function f(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10,
+           p11, p12, p13, p14, p15, p16, p17, p18, p19, p20,
+           p21, p22, p23, p24, p25, p26, p27, p28, p29, p30,
+           p31, p32, p33, p34, p35, p36, p37, p38, p39, p40,
+           p41, p42, p43, p44, p45, p46, p48, p49, p50, ...)
+  local a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14
+end
+
+f()   -- seg. fault (on some machines)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+@@ -324,7 +324,7 @@
+     case LUA_TLCL: {  /* Lua function: prepare its call */
+       StkId base;
+       Proto *p = clLvalue(func)->p;
+-      luaD_checkstack(L, p->maxstacksize);
++      luaD_checkstack(L, p->maxstacksize + p->numparams);
+       func = restorestack(L, funcr);
+       n = cast_int(L->top - func) - 1;  /* number of real arguments */
+       for (; n < p->numparams; n++)
+</PRE>
+
+<LI>
+<A NAME="5.2.2-2"></A>Garbage collector can trigger too many times in recursive loops.
+<BR><SPAN CLASS="note">reported by Roberto on 25 Apr 2013.
+existed since 5.2.2.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">function f() f() end
+f()   -- it takes too long before a "stack overflow" error
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lgc.c:
+@@ -495,2 +495,3 @@
+ static lu_mem traversestack (global_State *g, lua_State *th) {
++  int n = 0;
+   StkId o = th->stack;
+@@ -505,3 +506,9 @@
+   }
+-  return sizeof(lua_State) + sizeof(TValue) * th->stacksize;
++  else {  /* count call infos to compute size */
++    CallInfo *ci;
++    for (ci = &amp;th->base_ci; ci != th->ci; ci = ci->next)
++      n++;
++  }
++  return sizeof(lua_State) + sizeof(TValue) * th->stacksize +
++         sizeof(CallInfo) * n;
+ }
+</PRE>
+
+
+<LI>
+<A NAME="5.2.2-3"></A>Wrong assert when reporting concatenation errors
+(manifests only when Lua is compiled in debug mode).
+<BR><SPAN CLASS="note">reported by Roberto on 05 May 2013.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">-- only with Lua compiled in debug mode
+print({} .. 2)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -519,5 +519,5 @@
+ l_noret luaG_concaterror (lua_State *L, StkId p1, StkId p2) {
+   if (ttisstring(p1) || ttisnumber(p1)) p1 = p2;
+-  lua_assert(!ttisstring(p1) && !ttisnumber(p2));
++  lua_assert(!ttisstring(p1) && !ttisnumber(p1));
+   luaG_typeerror(L, p1, "concatenate");
+ }
+</PRE>
+
+<LI>
+<A NAME="5.2.2-4"></A>Wrong error message in some short-cut expressions.
+<BR><SPAN CLASS="note">reported by Egor Skriptunoff on 10 May 2013.
+existed since 5.0.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">a,b,c = true,true,true
+(a and b or c)('', '')
+--> stdin:1: attempt to call a boolean value (global 'c')
+--  it should be global 'b' instead of 'c'.
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -327,12 +327,20 @@
+ }
+ 
+ 
++static int filterpc (int pc, int jmptarget) {
++  if (pc < jmptarget)  /* is code conditional (inside a jump)? */
++    return -1;  /* cannot know who sets that register */
++  else return pc;  /* current position sets that register */
++}
++
++
+ /*
+ ** try to find last instruction before 'lastpc' that modified register 'reg'
+ */
+ static int findsetreg (Proto *p, int lastpc, int reg) {
+   int pc;
+   int setreg = -1;  /* keep last instruction that changed 'reg' */
++  int jmptarget = 0;  /* any code before this address is conditional */
+   for (pc = 0; pc < lastpc; pc++) {
+     Instruction i = p->code[pc];
+     OpCode op = GET_OPCODE(i);
+@@ -341,33 +349,38 @@
+       case OP_LOADNIL: {
+         int b = GETARG_B(i);
+         if (a <= reg && reg <= a + b)  /* set registers from 'a' to 'a+b' */
+-          setreg = pc;
++          setreg = filterpc(pc, jmptarget);
+         break;
+       }
+       case OP_TFORCALL: {
+-        if (reg >= a + 2) setreg = pc;  /* affect all regs above its base */
++        if (reg >= a + 2)  /* affect all regs above its base */
++          setreg = filterpc(pc, jmptarget);
+         break;
+       }
+       case OP_CALL:
+       case OP_TAILCALL: {
+-        if (reg >= a) setreg = pc;  /* affect all registers above base */
++        if (reg >= a)  /* affect all registers above base */
++          setreg = filterpc(pc, jmptarget);
+         break;
+       }
+       case OP_JMP: {
+         int b = GETARG_sBx(i);
+         int dest = pc + 1 + b;
+         /* jump is forward and do not skip `lastpc'? */
+-        if (pc < dest && dest <= lastpc)
+-          pc += b;  /* do the jump */
++        if (pc < dest && dest <= lastpc) {
++          if (dest > jmptarget)
++            jmptarget = dest;  /* update 'jmptarget' */
++        }
+         break;
+       }
+       case OP_TEST: {
+-        if (reg == a) setreg = pc;  /* jumped code can change 'a' */
++        if (reg == a)  /* jumped code can change 'a' */
++          setreg = filterpc(pc, jmptarget);
+         break;
+       }
+       default:
+         if (testAMode(op) && reg == a)  /* any instruction that set A */
+-          setreg = pc;
++          setreg = filterpc(pc, jmptarget);
+         break;
+     }
+   }
+</PRE>
+
+<LI>
+<A NAME="5.2.2-5"></A>luac listings choke on long strings.
+<BR><SPAN CLASS="note">reported by Ashwin Hirschi on 03 Jul 2013.
+existed since 5.2.1.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">-- When you call 'luac -l' over this chunk, it chokes the output
+s="Lorem ipsum dolor sit amet, consectetur, "
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+luac.c:
+@@ -251,7 +251,7 @@
+ static void PrintConstant(const Proto* f, int i)
+ {
+  const TValue* o=&amp;f->k[i];
+- switch (ttype(o))
++ switch (ttypenv(o))
+  {
+   case LUA_TNIL:
+        printf("nil");
+</PRE>
+
+<LI>
+<A NAME="5.2.2-6"></A>GC can collect a long string still in use during parser.
+<BR><SPAN CLASS="note">reported by Roberto on 30 Aug 2013.
+existed since 5.2.
+fixed in 5.2.3.</SPAN>
+<P>Example:
+This bug is very difficult to happen (and to reproduce),
+because it depends on the GC running in a very specific way when
+parsing a source code with long (larger than 40 characters) identifiers.
+<P>Patch:<PRE CLASS="patch">--- ltable.h	2013/04/12 18:48:47	2.16.1.1
++++ ltable.h	2013/08/30 15:34:24
+@@ -18,4 +18,8 @@
+ #define invalidateTMcache(t)	((t)->flags = 0)
+ 
++/* returns the key, given the value of a table entry */
++#define keyfromval(v) \
++  (gkey(cast(Node *, cast(char *, (v)) - offsetof(Node, i_val))))
++
+ 
+ LUAI_FUNC const TValue *luaH_getint (Table *t, int key);
+
+--- llex.c	2013/04/12 18:48:47	2.63.1.1
++++ llex.c	2013/08/30 15:34:59
+@@ -134,4 +134,7 @@
+     luaC_checkGC(L);
+   }
++  else {  /* string already present */
++    ts = rawtsvalue(keyfromval(o));  /* re-use value previously stored */
++  }
+   L->top--;  /* remove string from stack */
+   return ts;
+</PRE>
+
+<LI>
+<A NAME="5.2.2-7"></A>Call to macro <CODE>luai_userstateclose</CODE> should be done only
+after the calls to __gc methods.
+<BR><SPAN CLASS="note">reported by Jean-Luc Jumpertz on 02 Sep 2013.
+fixed in 5.2.3.</SPAN>
+<P>Patch:<PRE CLASS="patch">--- lstate.c	2013/04/12 18:48:47	2.99.1.1
++++ lstate.c	2013/11/08 17:39:57
+@@ -194,2 +194,4 @@
+   g->gcrunning = 1;  /* allow gc */
++  g->version = lua_version(NULL);
++  luai_userstateopen(L);
+ }
+@@ -224,2 +226,4 @@
+   luaC_freeallobjects(L);  /* collect all objects */
++  if (g->version)  /* closing a fully built state? */
++    luai_userstateclose(L);
+   luaM_freearray(L, G(L)->strt.hash, G(L)->strt.size);
+@@ -289,3 +293,3 @@
+   g->panic = NULL;
+-  g->version = lua_version(NULL);
++  g->version = NULL;
+   g->gcstate = GCSpause;
+@@ -308,4 +312,2 @@
+   }
+-  else
+-    luai_userstateopen(L);
+   return L;
+@@ -317,3 +319,2 @@
+   lua_lock(L);
+-  luai_userstateclose(L);
+   close_state(L);
+</PRE>
+
+<LI>
+<A NAME="5.2.2-8"></A>Resuming the running coroutine makes it unyieldable.
+<BR><SPAN CLASS="note">reported by Florian Nücke on 28 Oct 2013.
+existed since 5.2.
+fixed in 5.2.3.</SPAN>
+<P>Example:<PRE CLASS="example">-- should print 'true'
+print(coroutine.resume(coroutine.create(function()
+  coroutine.resume(coroutine.running())
+  coroutine.yield()
+end)))
+</PRE>
+<P>Patch:<PRE CLASS="patch">--- ldo.c	2013/04/19 21:03:23	2.108.1.2
++++ ldo.c	2013/11/08 18:20:57
+@@ -536,2 +536,3 @@
+   int status;
++  int oldnny = L->nny;  /* save 'nny' */
+   lua_lock(L);
+@@ -557,3 +558,3 @@
+   }
+-  L->nny = 1;  /* do not allow yields */
++  L->nny = oldnny;  /* restore 'nny' */
+   L->nCcalls--;
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.2.1">Lua 5.2.1</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.2.1-1">1</A> &middot;
+<A HREF="#5.2.1-2">2</A> &middot;
+<A HREF="#5.2.1-3">3</A> &middot;
+<A HREF="#5.2.1-4">4</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.2.1-1"></A>Some patterns can overflow the C stack, due to recursion.
+<BR><SPAN CLASS="note">reported by Tim Starling on 08 Jul 2012.
+existed since 2.5.
+fixed in 5.2.2.</SPAN>
+<P>Example:<PRE CLASS="example">print(string.find(string.rep("a", 2^20), string.rep(".?", 2^20)))</PRE>
+
+<LI>
+<A NAME="5.2.1-2"></A><CODE>pcall</CODE> may not restore previous error function when
+inside coroutines.
+<BR><SPAN CLASS="note">reported by Alexander Gavrilov on 12 Jun 2012.
+existed since 5.2.0.
+fixed in 5.2.2.</SPAN>
+<P>Example:<PRE CLASS="example">function errfunc(x)
+  return 'errfunc'
+end
+
+function test(do_yield)
+  print(do_yield and "yielding" or "not yielding")
+  pcall(function() -- this pcall sets errfunc back to none
+    if do_yield then
+      coroutine.yield() -- stops errfunc from being restored
+    end
+  end)
+  error('fail!')
+end
+
+coro = coroutine.wrap(function()
+  print(xpcall(test, errfunc, false))
+  print(xpcall(test, errfunc, true))
+  print(xpcall(test, errfunc, false))
+end)
+
+coro()
+--> not yielding
+--> false	errfunc
+--> yielding
+coro()
+--> false	temp:12: fail!       <<<< should be 'errfunc' too
+--> not yielding
+--> false	errfunc
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+@@ -403,7 +403,11 @@
+   int n;
+   lua_assert(ci->u.c.k != NULL);  /* must have a continuation */
+   lua_assert(L->nny == 0);
+-  /* finish 'lua_callk' */
++  if (ci->callstatus & CIST_YPCALL) {  /* was inside a pcall? */
++    ci->callstatus &= ~CIST_YPCALL;  /* finish 'lua_pcall' */
++    L->errfunc = ci->u.c.old_errfunc;
++  }
++  /* finish 'lua_callk'/'lua_pcall' */
+   adjustresults(L, ci->nresults);
+   /* call continuation function */
+   if (!(ci->callstatus & CIST_STAT))  /* no call status? */
+</PRE>
+
+<LI>
+<A NAME="5.2.1-3"></A>Check for garbage collector in function calls does not cover
+all paths.
+<BR><SPAN CLASS="note">reported by Roberto on 15 Aug 2012.
+existed since 5.2.1.
+fixed in 5.2.2.</SPAN>
+<P>Example:
+See <a href="http://lua-users.org/lists/lua-l/2012-08/msg00149.html">
+http://lua-users.org/lists/lua-l/2012-08/msg00149.html</a>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+@@ -311,6 +311,7 @@
+       ci->top = L->top + LUA_MINSTACK;
+       lua_assert(ci->top <= L->stack_last);
+       ci->callstatus = 0;
++      luaC_checkGC(L);  /* stack grow uses memory */
+       if (L->hookmask & LUA_MASKCALL)
+         luaD_hook(L, LUA_HOOKCALL, -1);
+       lua_unlock(L);
+@@ -338,6 +339,7 @@
+       ci->u.l.savedpc = p->code;  /* starting point */
+       ci->callstatus = CIST_LUA;
+       L->top = ci->top;
++      luaC_checkGC(L);  /* stack grow uses memory */
+       if (L->hookmask & LUA_MASKCALL)
+         callhook(L, ci);
+       return 0;
+@@ -393,7 +395,6 @@
+     luaV_execute(L);  /* call it */
+   if (!allowyield) L->nny--;
+   L->nCcalls--;
+-  luaC_checkGC(L);
+ }
+</PRE>
+
+<LI>
+<A NAME="5.2.1-4"></A><CODE>load/loadfile</CODE> return wrong result when given an environment
+for a binary chunk with no upvalues.
+<BR><SPAN CLASS="note">reported by Vladimir Strakh on 28 Nov 2012.
+existed since 5.2.0.
+fixed in 5.2.2.</SPAN>
+<P>Example:<PRE CLASS="example">f = load(string.dump(function () return 1 end), nil, "b", {})
+print(type(f))   --> table	(should be a function)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+@@ -244,5 +244,11 @@
+ 
+-static int load_aux (lua_State *L, int status) {
+-  if (status == LUA_OK)
++static int load_aux (lua_State *L, int status, int envidx) {
++  if (status == LUA_OK) {
++    if (envidx != 0) {  /* 'env' parameter? */
++      lua_pushvalue(L, envidx);  /* environment for loaded function */
++      if (!lua_setupvalue(L, -2, 1))  /* set it as 1st upvalue */
++        lua_pop(L, 1);  /* remove 'env' if not used by previous call */
++    }
+     return 1;
++  }
+   else {
+@@ -258,9 +264,5 @@
+   const char *mode = luaL_optstring(L, 2, NULL);
+-  int env = !lua_isnone(L, 3);  /* 'env' parameter? */
++  int env = (!lua_isnone(L, 3) ? 3 : 0);  /* 'env' index or 0 if no 'env' */
+   int status = luaL_loadfilex(L, fname, mode);
+-  if (status == LUA_OK && env) {  /* 'env' parameter? */
+-    lua_pushvalue(L, 3);
+-    lua_setupvalue(L, -2, 1);  /* set it as 1st upvalue of loaded chunk */
+-  }
+-  return load_aux(L, status);
++  return load_aux(L, status, env);
+ }
+@@ -309,5 +311,5 @@
+   size_t l;
+-  int top = lua_gettop(L);
+   const char *s = lua_tolstring(L, 1, &amp;l);
+   const char *mode = luaL_optstring(L, 3, "bt");
++  int env = (!lua_isnone(L, 4) ? 4 : 0);  /* 'env' index or 0 if no 'env' */
+   if (s != NULL) {  /* loading a string? */
+@@ -322,7 +324,3 @@
+   }
+-  if (status == LUA_OK && top >= 4) {  /* is there an 'env' argument */
+-    lua_pushvalue(L, 4);  /* environment for loaded function */
+-    lua_setupvalue(L, -2, 1);  /* set it as 1st upvalue */
+-  }
+-  return load_aux(L, status);
++  return load_aux(L, status, env);
+ }
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.2.0">Lua 5.2.0</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.2.0-1">1</A> &middot;
+<A HREF="#5.2.0-2">2</A> &middot;
+<A HREF="#5.2.0-3">3</A> &middot;
+<A HREF="#5.2.0-4">4</A> &middot;
+<A HREF="#5.2.0-5">5</A> &middot;
+<A HREF="#5.2.0-6">6</A>
+</SPAN>
+</H2>
+
+<OL>
+<LI>
+<A NAME="5.2.0-1"></A>Memory hoarding when creating Lua hooks for coroutines.
+<BR><SPAN CLASS="note">reported by Arseny Vakhrushev on 16 Jan 2012.
+existed since 5.1.
+fixed in 5.2.1.</SPAN>
+<P>Example:<PRE CLASS="example">collectgarbage(); print(collectgarbage'count' * 1024)
+
+for i = 1, 100 do
+  local co = coroutine.create(function () end)
+  local x = {}
+  for j=1,1000 do x[j] = j end
+  debug.sethook(co, function () return x end, 'l')
+end
+
+collectgarbage(); print(collectgarbage'count' * 1024)
+-- value should back to near the original level
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldblib.c:
+@@ -253,14 +253,15 @@
+ }
+ 
+ 
+-#define gethooktable(L)	luaL_getsubtable(L, LUA_REGISTRYINDEX, HOOKKEY);
++#define gethooktable(L)	luaL_getsubtable(L, LUA_REGISTRYINDEX, HOOKKEY)
+ 
+ 
+ static void hookf (lua_State *L, lua_Debug *ar) {
+   static const char *const hooknames[] =
+     {"call", "return", "line", "count", "tail call"};
+   gethooktable(L);
+-  lua_rawgetp(L, -1, L);
++  lua_pushthread(L);
++  lua_rawget(L, -2);
+   if (lua_isfunction(L, -1)) {
+     lua_pushstring(L, hooknames[(int)ar->event]);
+     if (ar->currentline >= 0)
+@@ -306,10 +307,15 @@
+     count = luaL_optint(L, arg+3, 0);
+     func = hookf; mask = makemask(smask, count);
+   }
+-  gethooktable(L);
++  if (gethooktable(L) == 0) {  /* creating hook table? */
++    lua_pushstring(L, "k");
++    lua_setfield(L, -2, "__mode");  /** hooktable.__mode = "k" */
++    lua_pushvalue(L, -1);
++    lua_setmetatable(L, -2);  /* setmetatable(hooktable) = hooktable */
++  }
++  lua_pushthread(L1); lua_xmove(L1, L, 1);
+   lua_pushvalue(L, arg+1);
+-  lua_rawsetp(L, -2, L1);  /* set new hook */
+-  lua_pop(L, 1);  /* remove hook table */
++  lua_rawset(L, -3);  /* set new hook */
+   lua_sethook(L1, func, mask, count);  /* set hooks */
+   return 0;
+ }
+@@ -325,7 +331,8 @@
+     lua_pushliteral(L, "external hook");
+   else {
+     gethooktable(L);
+-    lua_rawgetp(L, -1, L1);   /* get hook */
++    lua_pushthread(L1); lua_xmove(L1, L, 1);
++    lua_rawget(L, -2);   /* get hook */
+     lua_remove(L, -2);  /* remove hook table */
+   }
+   lua_pushstring(L, unmakemask(mask, buff));
+</PRE>
+
+<LI>
+<A NAME="5.2.0-2"></A>Lexical gets confused with some combination of arithmetic
+operators and hexadecimal numbers.
+<BR><SPAN CLASS="note">reported by Alexandra Barros on 17 Jan 2012.
+existed since 5.2.0.
+fixed in 5.2.1.</SPAN>
+<P>Example:<PRE CLASS="example">print(0xE+1)</PRE>
+<P>Patch:<PRE CLASS="patch">
+llex.c:
+@@ -223,12 +223,19 @@
+
+ /* LUA_NUMBER */
+ static void read_numeral (LexState *ls, SemInfo *seminfo) {
++  const char *expo = "Ee";
++  int first = ls->current;
+   lua_assert(lisdigit(ls->current));
+-  do {
+-    save_and_next(ls);
+-    if (check_next(ls, "EePp"))  /* exponent part? */
++  save_and_next(ls);
++  if (first == '0' && check_next(ls, "Xx"))  /* hexadecimal? */
++    expo = "Pp";
++  for (;;) {
++    if (check_next(ls, expo))  /* exponent part? */
+       check_next(ls, "+-");  /* optional exponent sign */
+-  } while (lislalnum(ls->current) || ls->current == '.');
++    if (lisxdigit(ls->current) || ls->current == '.')
++      save_and_next(ls);
++    else  break;
++  }
+   save(ls, '\0');
+   buffreplace(ls, '.', ls->decpoint);  /* follow locale for decimal point */
+   if (!buff2d(ls->buff, &amp;seminfo->r))  /* format error? */
+</PRE>
+
+<LI>
+<A NAME="5.2.0-3"></A>Finalizers may call functions from a dynamic library after
+the library has been unloaded.
+<BR><SPAN CLASS="note">reported by Josh Haberman on 08 Apr 2012.
+existed since 5.1.
+fixed in 5.2.1.</SPAN>
+<P>Example:<PRE CLASS="example">local u = setmetatable({}, {__gc = function () foo() end})
+local m = require 'mod'   -- 'mod' may be any dynamic library written in C
+foo = m.foo     -- 'foo' may be any function from 'mod'
+-- end program; it crashes
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+loadlib.c:
+95c95
+< #define LIBPREFIX	"LOADLIB: "
+---
+> #define CLIBS		"_CLIBS"
+251,266c251,256
+< 
+< static void **ll_register (lua_State *L, const char *path) {
+<   void **plib;
+<   lua_pushfstring(L, "%s%s", LIBPREFIX, path);
+<   lua_gettable(L, LUA_REGISTRYINDEX);  /* check library in registry? */
+<   if (!lua_isnil(L, -1))  /* is there an entry? */
+<     plib = (void **)lua_touserdata(L, -1);
+<   else {  /* no entry yet; create one */
+<     lua_pop(L, 1);  /* remove result from gettable */
+<     plib = (void **)lua_newuserdata(L, sizeof(const void *));
+<     *plib = NULL;
+<     luaL_setmetatable(L, "_LOADLIB");
+<     lua_pushfstring(L, "%s%s", LIBPREFIX, path);
+<     lua_pushvalue(L, -2);
+<     lua_settable(L, LUA_REGISTRYINDEX);
+<   }
+---
+> static void *ll_checkclib (lua_State *L, const char *path) {
+>   void *plib;
+>   lua_getfield(L, LUA_REGISTRYINDEX, CLIBS);
+>   lua_getfield(L, -1, path);
+>   plib = lua_touserdata(L, -1);  /* plib = CLIBS[path] */
+>   lua_pop(L, 2);  /* pop CLIBS table and 'plib' */
+270a261,270
+> static void ll_addtoclib (lua_State *L, const char *path, void *plib) {
+>   lua_getfield(L, LUA_REGISTRYINDEX, CLIBS);
+>   lua_pushlightuserdata(L, plib);
+>   lua_pushvalue(L, -1);
+>   lua_setfield(L, -3, path);  /* CLIBS[path] = plib */
+>   lua_rawseti(L, -2, luaL_len(L, -2) + 1);  /* CLIBS[#CLIBS + 1] = plib */
+>   lua_pop(L, 1);  /* pop CLIBS table */
+> }
+> 
+> 
+272,273c272,273
+< ** __gc tag method: calls library's `ll_unloadlib' function with the lib
+< ** handle
+---
+> ** __gc tag method for CLIBS table: calls 'll_unloadlib' for all lib
+> ** handles in list CLIBS
+276,278c276,281
+<   void **lib = (void **)luaL_checkudata(L, 1, "_LOADLIB");
+<   if (*lib) ll_unloadlib(*lib);
+<   *lib = NULL;  /* mark library as closed */
+---
+>   int n = luaL_len(L, 1);
+>   for (; n >= 1; n--) {  /* for each handle, in reverse order */
+>     lua_rawgeti(L, 1, n);  /* get handle CLIBS[n] */
+>     ll_unloadlib(lua_touserdata(L, -1));
+>     lua_pop(L, 1);  /* pop handle */
+>   }
+284,286c287,292
+<   void **reg = ll_register(L, path);
+<   if (*reg == NULL) *reg = ll_load(L, path, *sym == '*');
+<   if (*reg == NULL) return ERRLIB;  /* unable to load library */
+---
+>   void *reg = ll_checkclib(L, path);  /* check loaded C libraries */
+>   if (reg == NULL) {  /* must load library? */
+>     reg = ll_load(L, path, *sym == '*');
+>     if (reg == NULL) return ERRLIB;  /* unable to load library */
+>     ll_addtoclib(L, path, reg);
+>   }
+292c298
+<     lua_CFunction f = ll_sym(L, *reg, sym);
+---
+>     lua_CFunction f = ll_sym(L, reg, sym);
+675,676c681,683
+<   /* create new type _LOADLIB */
+<   luaL_newmetatable(L, "_LOADLIB");
+---
+>   /* create table CLIBS to keep track of loaded C libraries */
+>   luaL_getsubtable(L, LUA_REGISTRYINDEX, CLIBS);
+>   lua_createtable(L, 0, 1);  /* metatable for CLIBS */
+678a686
+>   lua_setmetatable(L, -2);
+</PRE>
+
+<LI>
+<A NAME="5.2.0-4"></A>Wrong handling of <CODE>nCcalls</CODE> in coroutines.
+<BR><SPAN CLASS="note">reported by Alexander Gavrilov on 18 Apr 2012.
+existed since 5.2.0.
+fixed in 5.2.1.</SPAN>
+<P>Example:<PRE CLASS="example">coroutine.wrap(function()
+  print(pcall(pcall,pcall,pcall,pcall,pcall,error,3))
+end)()
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+@@ -402,8 +402,6 @@
+   int n;
+   lua_assert(ci->u.c.k != NULL);  /* must have a continuation */
+   lua_assert(L->nny == 0);
+-  /* finish 'luaD_call' */
+-  L->nCcalls--;
+   /* finish 'lua_callk' */
+   adjustresults(L, ci->nresults);
+   /* call continuation function */
+@@ -513,7 +511,6 @@
+         api_checknelems(L, n);
+         firstArg = L->top - n;  /* yield results come from continuation */
+       }
+-      L->nCcalls--;  /* finish 'luaD_call' */
+       luaD_poscall(L, firstArg);  /* finish 'luaD_precall' */
+     }
+     unroll(L, NULL);
+</PRE>
+
+<LI>
+<A NAME="5.2.0-5"></A>Internal Lua values may escape through the debug API.
+<BR><SPAN CLASS="note">reported by Dan Tull on 20 Apr 2012.
+existed since 5.1.
+fixed in 5.2.1.</SPAN>
+<P>Example:<PRE CLASS="example">-- for Lua 5.1
+local firsttime = true
+local function foo ()
+  if firsttime then
+    firsttime = false
+    return "a = 1" 
+  else
+    for i = 1, 10 do
+      print(debug.getlocal(2, i))
+    end
+  end
+end
+
+print(load(foo))   -- prints some lines and then seg. fault.
+</PRE>
+
+<LI>
+<A NAME="5.2.0-6"></A>Problems when yielding from debug hooks.
+<BR><SPAN CLASS="note">reported by Erik Cassel on 05 Jun 2012.
+existed since 5.2.0.
+fixed in 5.2.1.</SPAN>
+<P>Example:
+In C, set a line hook that simply yields,
+and then call any Lua function.
+You get an infinite loop of yields.
+
+</OL>
+
+<H2><A NAME="5.1.5">Lua 5.1.5</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1.5-1">1</A> &middot;
+<A HREF="#5.1.5-2">2</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1.5-1"></A>Comments in src/Makefile are not portable.
+<BR><SPAN CLASS="note">reported by Lorenzo Donati on 09 Mar 2012.</SPAN>
+<P>Example:
+This glitch happens when compiling Lua on some mingw systems;
+it does not seem to affect other systems.
+<P>Patch:<PRE CLASS="patch">
+src/Makefile:
+@@ -50,3 +50,3 @@
+ $(LUA_A): $(CORE_O) $(LIB_O)
+-	$(AR) $@ $(CORE_O) $(LIB_O)	# DLL needs all object files
++	$(AR) $@ $(CORE_O) $(LIB_O)
+ 	$(RANLIB) $@
+</PRE>
+
+<LI>
+<A NAME="5.1.5-2"></A>When loading a file,
+Lua may call the reader function again after it returned end of input
+.
+<BR><SPAN CLASS="note">reported by Chris Howie on 05 Jun 2013.
+existed since 5.1.
+fixed in 5.2.</SPAN>
+<P>Example:<PRE CLASS="example">load(function () print("called"); return nil end)
+--> called
+--> called             (should be called only once!)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lzio.h:
+@@ -59,6 +59,7 @@
+   lua_Reader reader;
+   void* data;			/* additional data */
+   lua_State *L;			/* Lua state (for reader) */
++  int eoz;			/* true if reader has no more data */
+ };
+
+
+lzio.c:
+@@ -22,10 +22,14 @@
+   size_t size;
+   lua_State *L = z->L;
+   const char *buff;
++  if (z->eoz) return EOZ;
+   lua_unlock(L);
+   buff = z->reader(L, z->data, &amp;size);
+   lua_lock(L);
+-  if (buff == NULL || size == 0) return EOZ;
++  if (buff == NULL || size == 0) {
++    z->eoz = 1;  /* avoid calling reader function next time */
++    return EOZ;
++  }
+   z->n = size - 1;
+   z->p = buff;
+   return char2int(*(z->p++));
+@@ -51,6 +55,7 @@
+   z->data = data;
+   z->n = 0;
+   z->p = NULL;
++  z->eoz = 0;
+ }
+</PRE>
+
+
+</OL>
+
+<H2><A NAME="5.1.4">Lua 5.1.4</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1.4-1">1</A> &middot;
+<A HREF="#5.1.4-2">2</A> &middot;
+<A HREF="#5.1.4-3">3</A> &middot;
+<A HREF="#5.1.4-4">4</A> &middot;
+<A HREF="#5.1.4-5">5</A> &middot;
+<A HREF="#5.1.4-6">6</A> &middot;
+<A HREF="#5.1.4-7">7</A> &middot;
+<A HREF="#5.1.4-8">8</A> &middot;
+<A HREF="#5.1.4-9">9</A> &middot;
+<A HREF="#5.1.4-10">10</A> &middot;
+<A HREF="#5.1.4-11">11</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1.4-1"></A>Maliciously crafted precompiled code can crash Lua.
+<BR><SPAN CLASS="note">reported by Peter Cawley on 01 Sep 2008.</SPAN>
+
+<P>
+Solution:
+To avoid running precompiled code from untrusted sources, raise
+an error if the first byte in the stream is the escape character
+(decimal 27).
+
+<LI>
+<A NAME="5.1.4-2"></A>Smart use of varargs may create functions that return too
+many arguments and overflow the stack of C&nbsp;functions.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 10 Dec 2008.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">
+function lunpack(i, ...)
+  if i == 0 then
+    return ...
+  else
+    return lunpack(i-1, 1, ...)
+  end
+end
+</PRE>
+Now, if C calls <CODE>lunpack(n)</CODE> with a huge n, it may end with
+too many values in its stack and confuse its stack indices.
+
+<LI>
+<A NAME="5.1.4-3"></A>Wrong code generation for some particular boolean expressions.
+(see also <A HREF="#5.1.4-9">9</A>)
+<BR><SPAN CLASS="note">reported by Brian Kelley on 15 Apr 2009.
+existed since 5.0.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(((1 or false) and true) or false)   --> 1, but should be 'true'
+</PRE>
+<P>Patch:
+(partial solution; see also <A HREF="#5.1.4-9">9</A>)
+<PRE CLASS="patch">
+lcode.c:
+@@ -544,15 +544,18 @@
+       pc = NO_JUMP;  /* always true; do nothing */
+       break;
+     }
+-    case VFALSE: {
+-      pc = luaK_jump(fs);  /* always jump */
+-      break;
+-    }
+     case VJMP: {
+       invertjump(fs, e);
+       pc = e->u.s.info;
+       break;
+     }
++    case VFALSE: {
++      if (!hasjumps(e)) {
++        pc = luaK_jump(fs);  /* always jump */
++        break;
++      }
++      /* else go through */
++    }
+     default: {
+       pc = jumponcond(fs, e, 0);
+       break;
+@@ -572,14 +575,17 @@
+       pc = NO_JUMP;  /* always false; do nothing */
+       break;
+     }
+-    case VTRUE: {
+-      pc = luaK_jump(fs);  /* always jump */
+-      break;
+-    }
+     case VJMP: {
+       pc = e->u.s.info;
+       break;
+     }
++    case VTRUE: {
++      if (!hasjumps(e)) {
++        pc = luaK_jump(fs);  /* always jump */
++        break;
++      }
++      /* else go through */
++    }
+     default: {
+       pc = jumponcond(fs, e, 1);
+       break;
+</PRE>
+
+<LI>
+<A NAME="5.1.4-4"></A><CODE>luaV_settable</CODE> may invalidate a reference to a table and try
+to reuse it.
+<BR><SPAN CLASS="note">reported by Mark Feldman on 27 Jun 2009.
+existed since 5.0.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">
+grandparent = {}
+grandparent.__newindex = function(s,_,_) print(s) end
+
+parent = {}
+parent.__newindex = parent
+setmetatable(parent, grandparent)
+
+child = setmetatable({}, parent)
+child.foo = 10      --> (crash on some machines)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+@@ -133,6 +133,7 @@
+ 
+ void luaV_settable (lua_State *L, const TValue *t, TValue *key, StkId val) {
+   int loop;
++  TValue temp;
+   for (loop = 0; loop < MAXTAGLOOP; loop++) {
+     const TValue *tm;
+     if (ttistable(t)) {  /* `t' is a table? */
+@@ -152,7 +153,9 @@
+       callTM(L, tm, t, key, val);
+       return;
+     }
+-    t = tm;  /* else repeat with `tm' */ 
++    /* else repeat with `tm' */
++    setobj(L, &amp;temp, tm);  /* avoid pointing inside table (may rehash) */
++    t = &amp;temp;
+   }
+   luaG_runerror(L, "loop in settable");
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.4-5"></A><CODE>debug.getfenv</CODE> does not check whether it has an argument.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 30 Jul 2009.
+existed since 5.1.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">debug.getfenv()   -- should raise an error</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldblib.c:
+@@ -45,6 +45,7 @@
+ 
+ 
+ static int db_getfenv (lua_State *L) {
++  luaL_checkany(L, 1);
+   lua_getfenv(L, 1);
+   return 1;
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.4-6"></A>GC may get stuck during parsing and avoids proper resizing of
+the string table,
+making its lists grow too much and degrading performance.
+<BR><SPAN CLASS="note">reported by Sean Conner on 10 Nov 2009.
+existed since 5.1.
+fixed in 5.1.5.</SPAN>
+<P>Example:
+See
+<A HREF="http://lua-users.org/lists/lua-l/2009-11/msg00463.html">this message</A>.
+<P>Patch:<PRE CLASS="patch">
+llex.c:
+@@ -118,8 +118,10 @@
+   lua_State *L = ls->L;
+   TString *ts = luaS_newlstr(L, str, l);
+   TValue *o = luaH_setstr(L, ls->fs->h, ts);  /* entry for `str' */
+-  if (ttisnil(o))
++  if (ttisnil(o)) {
+     setbvalue(o, 1);  /* make sure `str' will not be collected */
++    luaC_checkGC(L);
++  }
+   return ts;
+ }
+ 
+</PRE>
+<LI>
+<A NAME="5.1.4-7"></A><CODE>string.format</CODE> may get buffer as an argument when there are
+missing arguments and format string is too long.
+<BR><SPAN CLASS="note">reported by Roberto on 12 Apr 2010.
+existed since 5.0.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">x = string.rep("x", 10000) .. "%d"
+print(string.format(x))    -- gives wrong error message
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lstrlib.c:
+@@ -754,6 +754,7 @@
+ 
+ 
+ static int str_format (lua_State *L) {
++  int top = lua_gettop(L);
+   int arg = 1;
+   size_t sfl;
+   const char *strfrmt = luaL_checklstring(L, arg, &amp;sfl);
+@@ -768,7 +769,8 @@
+     else { /* format item */
+       char form[MAX_FORMAT];  /* to store the format (`%...') */
+       char buff[MAX_ITEM];  /* to store the formatted item */
+-      arg++;
++      if (++arg > top)
++        luaL_argerror(L, arg, "no value");
+       strfrmt = scanformat(L, strfrmt, form);
+       switch (*strfrmt++) {
+         case 'c': {
+</PRE>
+
+<LI>
+<A NAME="5.1.4-8"></A><CODE>io.read("*n","*n")</CODE> may return garbage if second read fails.
+<BR><SPAN CLASS="note">reported by Roberto on 12 Apr 2010.
+existed since 5.0.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">print(io.read("*n", "*n"))   --<< enter "10   hi"
+--> file (0x884420)	nil
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+liolib.c:
+@@ -276,7 +276,10 @@
+     lua_pushnumber(L, d);
+     return 1;
+   }
+-  else return 0;  /* read fails */
++  else {
++    lua_pushnil(L);  /* "result" to be removed */
++    return 0;  /* read fails */
++  }
+ }
+ 
+ 
+</PRE>
+
+<LI>
+<A NAME="5.1.4-9"></A>Wrong code generation for some particular boolean expressions.
+<BR><SPAN CLASS="note">reported by Thierry Van Elsuwe on 20 Jan 2011.
+existed since 5.0.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">print((('hi' or true) and true) or true)
+--> hi     (should be true)
+print(((nil and nil) or false) and true)
+--> nil    (should be false)
+</PRE>
+<P>Patch:
+(to be applied after the patch in <A HREF="#5.1.4-3">3</A>)
+<PRE CLASS="patch">
+lcode.c:
+@@ -549,13 +549,6 @@
+       pc = e->u.s.info;
+       break;
+     }
+-    case VFALSE: {
+-      if (!hasjumps(e)) {
+-        pc = luaK_jump(fs);  /* always jump */
+-        break;
+-      }
+-      /* else go through */
+-    }
+     default: {
+       pc = jumponcond(fs, e, 0);
+       break;
+@@ -579,13 +572,6 @@
+       pc = e->u.s.info;
+       break;
+     }
+-    case VTRUE: {
+-      if (!hasjumps(e)) {
+-        pc = luaK_jump(fs);  /* always jump */
+-        break;
+-      }
+-      /* else go through */
+-    }
+     default: {
+       pc = jumponcond(fs, e, 1);
+       break;
+</PRE>
+
+<LI>
+<A NAME="5.1.4-10"></A>Newindex metamethod may not work if metatable is its own metatable.
+<BR><SPAN CLASS="note">reported by Cuero Bugot on 09 Aug 2011.
+existed since 5.1.
+fixed in 5.1.5.</SPAN>
+<P>Example:<PRE CLASS="example">meta={}
+setmetatable(meta, meta)
+meta.__newindex = function(t, key, value) print("set") end
+o = setmetatable({}, meta)
+o.x = 10    -- should print 'set'
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+@@ -142,6 +142,7 @@
+       if (!ttisnil(oldval) ||  /* result is no nil? */
+           (tm = fasttm(L, h->metatable, TM_NEWINDEX)) == NULL) { /* or no TM? */
+         setobj2t(L, oldval, val);
++        h->flags = 0;
+         luaC_barriert(L, h, val);
+         return;
+       }
+</PRE>
+
+<LI>
+<A NAME="5.1.4-11"></A>Parser may collect a prototype while building it.
+<BR><SPAN CLASS="note">reported by Ingo van Lil on 13 Oct 2011.
+existed since 5.1.4 (caused by patch 5.1.4-6).
+fixed in 5.1.5.</SPAN>
+<P>Patch:<PRE CLASS="patch">
+lparser.c:
+@@ -374,9 +374,9 @@
+   lua_assert(luaG_checkcode(f));
+   lua_assert(fs->bl == NULL);
+   ls->fs = fs->prev;
+-  L->top -= 2;  /* remove table and prototype from the stack */
+   /* last token read was anchored in defunct function; must reanchor it */
+   if (fs) anchor_token(ls);
++  L->top -= 2;  /* remove table and prototype from the stack */
+ }
+ 
+ 
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.1.3">Lua 5.1.3</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1.3-1">1</A> &middot;
+<A HREF="#5.1.3-2">2</A> &middot;
+<A HREF="#5.1.3-3">3</A> &middot;
+<A HREF="#5.1.3-4">4</A> &middot;
+<A HREF="#5.1.3-5">5</A> &middot;
+<A HREF="#5.1.3-6">6</A> &middot;
+<A HREF="#5.1.3-7">7</A> &middot;
+<A HREF="#5.1.3-8">8</A> &middot;
+<A HREF="#5.1.3-9">9</A> &middot;
+<A HREF="#5.1.3-10">10</A> &middot;
+<A HREF="#5.1.3-11">11</A> &middot;
+<A HREF="#5.1.3-12">12</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1.3-1"></A><CODE>LUAI_MAXCSTACK</CODE> must be smaller than <CODE>-LUA_REGISTRYINDEX</CODE>.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 11 Feb 2008.
+existed since 5.1.3.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+j = 1e4
+co = coroutine.create(function()
+       t = {}
+       for i = 1, j do t[i] = i end
+       return unpack(t)
+end)
+print(coroutine.resume(co))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+luaconf.h:
+443c443,444
+< ** functions to consume unlimited stack space.
+---
+> ** functions to consume unlimited stack space. (must be smaller than
+> ** -LUA_REGISTRYINDEX)
+445,446c446
+< #define LUAI_MCS_AUX  ((int)(INT_MAX / (4*sizeof(LUA_NUMBER))))
+< #define LUAI_MAXCSTACK        (LUAI_MCS_AUX > SHRT_MAX ? SHRT_MAX : LUAI_MCS_AUX)
+---
+> #define LUAI_MAXCSTACK        8000
+</PRE>
+
+<LI>
+<A NAME="5.1.3-2"></A><CODE>coroutine.resume</CODE> pushes element without ensuring stack size.
+<BR><SPAN CLASS="note">reported on 11 Feb 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:
+This bug cannot be detected without internal assertions.
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+@@ -526,7 +526,7 @@
+   status = lua_resume(co, narg);
+   if (status == 0 || status == LUA_YIELD) {
+     int nres = lua_gettop(co);
+-    if (!lua_checkstack(L, nres))
++    if (!lua_checkstack(L, nres + 1))
+       luaL_error(L, "too many results to resume");
+     lua_xmove(co, L, nres);  /* move yielded values */
+     return nres;
+</PRE>
+
+<LI>
+<A NAME="5.1.3-3"></A><CODE>lua_checkstack</CODE> may have arithmetic overflow for large 'size'.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 12 Feb 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(unpack({1,2,3}, 0, 2^31-3))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lapi.c:
+@@ -93,15 +93,14 @@
+ 
+ 
+ LUA_API int lua_checkstack (lua_State *L, int size) {
+-  int res;
++  int res = 1;
+   lua_lock(L);
+-  if ((L->top - L->base + size) > LUAI_MAXCSTACK)
++  if (size > LUAI_MAXCSTACK || (L->top - L->base + size) > LUAI_MAXCSTACK)
+     res = 0;  /* stack overflow */
+-  else {
++  else if (size > 0) {
+     luaD_checkstack(L, size);
+     if (L->ci->top < L->top + size)
+       L->ci->top = L->top + size;
+-    res = 1;
+   }
+   lua_unlock(L);
+   return res;
+</PRE>
+
+<LI>
+<A NAME="5.1.3-4"></A><CODE>unpack</CODE> with maximum indices may crash due to arithmetic overflow.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 12 Feb 2008.
+existed since 5.1.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(unpack({1,2,3}, 2^31-1, 2^31-1))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+@@ -344,10 +344,12 @@
+   luaL_checktype(L, 1, LUA_TTABLE);
+   i = luaL_optint(L, 2, 1);
+   e = luaL_opt(L, luaL_checkint, 3, luaL_getn(L, 1));
++  if (i > e) return 0;  /* empty range */
+   n = e - i + 1;  /* number of elements */
+-  if (n <= 0) return 0;  /* empty range */
+-  luaL_checkstack(L, n, "table too big to unpack");
+-  for (; i<=e; i++)  /* push arg[i...e] */
++  if (n <= 0 || !lua_checkstack(L, n))  /* n <= 0 means arith. overflow */
++    return luaL_error(L, "too many results to unpack");
++  lua_rawgeti(L, 1, i);  /* push arg[i] (avoiding overflow problems) */
++  while (i++ < e)  /* push arg[i + 1...e] */
+     lua_rawgeti(L, 1, i);
+   return n;
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.3-5"></A>Maliciously crafted precompiled code can crash Lua.
+<BR><SPAN CLASS="note">reported by Peter Cawley on 24 Mar 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = string.dump(function()return;end)
+a = a:gsub(string.char(30,37,122,128), string.char(34,0,0), 1)
+loadstring(a)()
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -275,12 +275,12 @@
+ 
+ static int precheck (const Proto *pt) {
+   check(pt->maxstacksize <= MAXSTACK);
+-  lua_assert(pt->numparams+(pt->is_vararg &amp; VARARG_HASARG) <= pt->maxstacksize);
+-  lua_assert(!(pt->is_vararg &amp; VARARG_NEEDSARG) ||
++  check(pt->numparams+(pt->is_vararg &amp; VARARG_HASARG) <= pt->maxstacksize);
++  check(!(pt->is_vararg &amp; VARARG_NEEDSARG) ||
+               (pt->is_vararg &amp; VARARG_HASARG));
+   check(pt->sizeupvalues <= pt->nups);
+   check(pt->sizelineinfo == pt->sizecode || pt->sizelineinfo == 0);
+-  check(GET_OPCODE(pt->code[pt->sizecode-1]) == OP_RETURN);
++  check(pt->sizecode > 0 &amp;&amp; GET_OPCODE(pt->code[pt->sizecode-1]) == OP_RETURN);
+   return 1;
+ }
+ 
+@@ -363,7 +363,11 @@
+     }
+     switch (op) {
+       case OP_LOADBOOL: {
+-        check(c == 0 || pc+2 < pt->sizecode);  /* check its jump */
++        if (c == 1) {  /* does it jump? */
++          check(pc+2 < pt->sizecode);  /* check its jump */
++          check(GET_OPCODE(pt->code[pc+1]) != OP_SETLIST ||
++                GETARG_C(pt->code[pc+1]) != 0);
++        }
+         break;
+       }
+       case OP_LOADNIL: {
+@@ -428,7 +432,10 @@
+       }
+       case OP_SETLIST: {
+         if (b > 0) checkreg(pt, a + b);
+-        if (c == 0) pc++;
++        if (c == 0) {
++          pc++;
++          check(pc < pt->sizecode - 1);
++        }
+         break;
+       }
+       case OP_CLOSURE: {
+</PRE>
+
+<LI>
+<A NAME="5.1.3-6"></A>Maliciously crafted precompiled code can blow the C stack.
+<BR><SPAN CLASS="note">reported by Greg Falcon on 25 Mar 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+function crash(depth)
+  local init = '\27\76\117\97\81\0\1\4\4\4\8\0\7\0\0\0\61\115\116' ..
+               '\100\105\110\0\1\0\0\0\1\0\0\0\0\0\0\2\2\0\0\0\36' ..
+               '\0\0\0\30\0\128\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0' ..
+               '\1\0\0\0\0\0\0\2'
+  local mid = '\1\0\0\0\30\0\128\0\0\0\0\0\0\0\0\0\1\0\0\0\1\0\0\0\0'
+  local fin = '\0\0\0\0\0\0\0\2\0\0\0\1\0\0\0\1\0\0\0\1\0\0\0\2\0' ..
+              '\0\0\97\0\1\0\0\0\1\0\0\0\0\0\0\0'
+  local lch = '\2\0\0\0\36\0\0\0\30\0\128\0\0\0\0\0\1\0\0\0\0\0\0' ..
+              '\0\1\0\0\0\1\0\0\0\0\0\0\2'
+  local rch = '\0\0\0\0\0\0\0\2\0\0\0\1\0\0\0\1\0\0\0\1\0\0\0\2\0' ..
+              '\0\0\97\0\1\0\0\0\1'
+  for i=1,depth do lch,rch = lch..lch,rch..rch end
+  loadstring(init .. lch .. mid .. rch .. fin)
+end
+for i=1,25 do print(i); crash(i) end
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lundump.c:
+@@ -161,7 +160,9 @@
+ 
+ static Proto* LoadFunction(LoadState* S, TString* p)
+ {
+- Proto* f=luaF_newproto(S->L);
++ Proto* f;
++ if (++S->L->nCcalls > LUAI_MAXCCALLS) error(S,"code too deep");
++ f=luaF_newproto(S->L);
+  setptvalue2s(S->L,S->L->top,f); incr_top(S->L);
+  f->source=LoadString(S); if (f->source==NULL) f->source=p;
+  f->linedefined=LoadInt(S);
+@@ -175,6 +176,7 @@
+  LoadDebug(S,f);
+  IF (!luaG_checkcode(f), "bad code");
+  S->L->top--;
++ S->L->nCcalls--;
+  return f;
+ }
+ 
+</PRE>
+
+<LI>
+<A NAME="5.1.3-7"></A>Code validator may reject (maliciously crafted) correct code.
+<BR><SPAN CLASS="note">reported by Greg Falcon on 26 Mar 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+z={}
+for i=1,27290 do z[i]='1,' end
+z = 'if 1+1==2 then local a={' .. table.concat(z) .. '} end'
+func = loadstring(z)
+print(loadstring(string.dump(func)))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -346,9 +346,18 @@
+           int dest = pc+1+b;
+           check(0 <= dest &amp;&amp; dest < pt->sizecode);
+           if (dest > 0) {
+-            /* cannot jump to a setlist count */
+-            Instruction d = pt->code[dest-1];
+-            check(!(GET_OPCODE(d) == OP_SETLIST &amp;&amp; GETARG_C(d) == 0));
++            int j;
++            /* check that it does not jump to a setlist count; this
++               is tricky, because the count from a previous setlist may
++               have the same value of an invalid setlist; so, we must
++               go all the way back to the first of them (if any) */
++            for (j = 0; j < dest; j++) {
++              Instruction d = pt->code[dest-1-j];
++              if (!(GET_OPCODE(d) == OP_SETLIST &amp;&amp; GETARG_C(d) == 0)) break;
++            }
++            /* if 'j' is even, previous value is not a setlist (even if
++               it looks like one) */
++            check((j&amp;1) == 0);
+           }
+         }
+         break;
+</PRE>
+
+<LI>
+<A NAME="5.1.3-8"></A>Maliciously crafted precompiled code can inject invalid boolean
+values into Lua code.
+<BR><SPAN CLASS="note">reported by Greg Falcon on 27 Mar 2008.
+existed since 5.0.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+maybe = string.dump(function() return ({[true]=true})[true] end)
+maybe = maybe:gsub('\1\1','\1\2')
+maybe = loadstring(maybe)()
+assert(type(maybe) == "boolean" and maybe ~= true and maybe ~= false)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lundump.c:
+@@ -115,7 +115,7 @@
+        setnilvalue(o);
+        break;
+    case LUA_TBOOLEAN:
+-       setbvalue(o,LoadChar(S));
++       setbvalue(o,LoadChar(S)!=0);
+        break;
+    case LUA_TNUMBER:
+        setnvalue(o,LoadNumber(S));
+</PRE>
+
+<LI>
+<A NAME="5.1.3-9"></A><CODE>string.byte</CODE> gets confused with some out-of-range negative indices.
+<BR><SPAN CLASS="note">reported by Mike Pall on 03 Jun 2008.
+existed since 5.1.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(string.byte("abc", -5))   --> 97   98   99   (should print nothing)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lstrlib.c:
+@@ -35,7 +35,8 @@
+ 
+ static ptrdiff_t posrelat (ptrdiff_t pos, size_t len) {
+   /* relative string position: negative means back from end */
+-  return (pos>=0) ? pos : (ptrdiff_t)len+pos+1;
++  if (pos < 0) pos += (ptrdiff_t)len + 1;
++  return (pos >= 0) ? pos : 0;
+ }
+ 
+ 
+</PRE>
+
+<LI>
+<A NAME="5.1.3-10"></A>User-requested GC step may loop forever.
+<BR><SPAN CLASS="note">reported by Makoto Hamanaka on 01 Jul 2008.
+existed since 5.1.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+collectgarbage("setpause", 100) -- small value
+collectgarbage("setstepmul", 2000) -- large value
+collectgarbage("step",0)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lapi.c:
+@@ -929,10 +929,13 @@
+         g->GCthreshold = g->totalbytes - a;
+       else
+         g->GCthreshold = 0;
+-      while (g->GCthreshold <= g->totalbytes)
++      while (g->GCthreshold <= g->totalbytes) {
+         luaC_step(L);
+-      if (g->gcstate == GCSpause)  /* end of cycle? */
+-        res = 1;  /* signal it */
++        if (g->gcstate == GCSpause) {  /* end of cycle? */
++          res = 1;  /* signal it */
++          break;
++        }
++      }
+       break;
+     }
+     case LUA_GCSETPAUSE: {
+</PRE>
+
+<LI>
+<A NAME="5.1.3-11"></A><CODE>module</CODE> may change the environment of a C function.
+<BR><SPAN CLASS="note">reported by Peter Cawley on 16 Jul 2008.
+existed since 5.1.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+pcall(module, "xuxu")
+assert(debug.getfenv(pcall) == xuxu)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+loadlib.c:
+@@ -506,8 +506,11 @@
+ 
+ static void setfenv (lua_State *L) {
+   lua_Debug ar;
+-  lua_getstack(L, 1, &amp;ar);
+-  lua_getinfo(L, "f", &amp;ar);
++  if (lua_getstack(L, 1, &amp;ar) == 0 ||
++      lua_getinfo(L, "f", &amp;ar) == 0 ||  /* get calling function */
++      lua_iscfunction(L, -1))
++    luaL_error(L, "function " LUA_QL("module")
++                  " not called from a Lua function");
+   lua_pushvalue(L, -2);
+   lua_setfenv(L, -2);
+   lua_pop(L, 1);
+</PRE>
+
+<LI>
+<A NAME="5.1.3-12"></A>Internal macro <CODE>svalue</CODE> is wrong.
+<BR><SPAN CLASS="note">reported by Martijn van Buul on 04 Aug 2008.
+existed since 5.1.
+fixed in 5.1.4.</SPAN>
+<P>Example:<PRE CLASS="example">
+/* in luaconf.h */
+#define LUAI_USER_ALIGNMENT_T   union { char b[32]; }
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lobject.h:
+@@ -210,3 +210,3 @@
+ #define getstr(ts)	cast(const char *, (ts) + 1)
+-#define svalue(o)       getstr(tsvalue(o))
++#define svalue(o)       getstr(rawtsvalue(o))
+ 
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.1.2">Lua 5.1.2</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1.2-1">1</A> &middot;
+<A HREF="#5.1.2-2">2</A> &middot;
+<A HREF="#5.1.2-3">3</A> &middot;
+<A HREF="#5.1.2-4">4</A> &middot;
+<A HREF="#5.1.2-5">5</A> &middot;
+<A HREF="#5.1.2-6">6</A> &middot;
+<A HREF="#5.1.2-7">7</A> &middot;
+<A HREF="#5.1.2-8">8</A> &middot;
+<A HREF="#5.1.2-9">9</A> &middot;
+<A HREF="#5.1.2-10">10</A> &middot;
+<A HREF="#5.1.2-11">11</A> &middot;
+<A HREF="#5.1.2-12">12</A> &middot;
+<A HREF="#5.1.2-13">13</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1.2-1"></A>Lua may close standard files,
+which then may be used by C.
+<BR><SPAN CLASS="note">reported by David Manura on 17 Apr 2007.
+fixed in 5.1.3.</SPAN>
+
+<LI>
+<A NAME="5.1.2-2"></A>Code generated for <CODE>-nil</CODE>, <CODE>-true</CODE>, and <CODE>-false</CODE> is wrong.
+<BR><SPAN CLASS="note">reported by David Manura and Rici Lake on 29 Apr 2007.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">print(-nil)</PRE>
+<P>Patch:<PRE CLASS="patch">
+lcode.c:
+@@ -699,7 +699,7 @@
+   e2.t = e2.f = NO_JUMP; e2.k = VKNUM; e2.u.nval = 0;
+   switch (op) {
+     case OPR_MINUS: {
+-      if (e->k == VK)
++      if (!isnumeral(e))
+         luaK_exp2anyreg(fs, e);  /* cannot operate on non-numeric constants */
+       codearith(fs, OP_UNM, e, &amp;e2);
+       break;
+</PRE>
+
+<LI>
+<A NAME="5.1.2-3"></A>Count hook may be called without being set.
+<BR><SPAN CLASS="note">reported by Mike Pall in May 2007.
+fixed in 5.1.3.</SPAN>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+@@ -61,11 +61,9 @@
+   lu_byte mask = L->hookmask;
+   const Instruction *oldpc = L->savedpc;
+   L->savedpc = pc;
+-  if (mask > LUA_MASKLINE) {  /* instruction-hook set? */
+-    if (L->hookcount == 0) {
+-      resethookcount(L);
+-      luaD_callhook(L, LUA_HOOKCOUNT, -1);
+-    }
++  if ((mask &amp; LUA_MASKCOUNT) &amp;&amp; L->hookcount == 0) {
++    resethookcount(L);
++    luaD_callhook(L, LUA_HOOKCOUNT, -1);
+   }
+   if (mask &amp; LUA_MASKLINE) {
+     Proto *p = ci_func(L->ci)->l.p;
+</PRE>
+
+<LI>
+<A NAME="5.1.2-4"></A>Recursive coroutines may overflow C stack.
+<P>Example:<PRE CLASS="example">
+a = function(a) coroutine.wrap(a)(a) end
+a(a)
+</PRE>
+<P>Patch:
+The 'nCcalls' counter should be shared by all threads.
+(That is, it should be declared in the 'global_State' structure,
+not in 'lua_State'.)
+
+<LI>
+<A NAME="5.1.2-5"></A>Wrong error message in some concatenations.
+<BR><SPAN CLASS="note">reported by Alex Davies in May 2007.
+existed since 5.1.2.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">a = nil; a = (1)..a</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -565,8 +565,8 @@
+
+
+ void luaG_concaterror (lua_State *L, StkId p1, StkId p2) {
+-  if (ttisstring(p1)) p1 = p2;
+-  lua_assert(!ttisstring(p1));
++  if (ttisstring(p1) || ttisnumber(p1)) p1 = p2;
++  lua_assert(!ttisstring(p1) &amp;&amp; !ttisnumber(p1));
+   luaG_typeerror(L, p1, "concatenate");
+ }
+
+</PRE>
+
+<LI>
+<A NAME="5.1.2-6"></A>Very small numbers all collide in the hash function.
+(This creates only performance problems; the behavior is correct.).
+<BR><SPAN CLASS="note">reported on 18 Apr 2007.
+existed since Lua 5.0.
+fixed in 5.1.3.</SPAN>
+<P>Patch:<PRE CLASS="patch">
+ltable.c:
+87,88c87,88
+<   n += 1;  /* normalize number (avoid -0) */
+<   lua_assert(sizeof(a) <= sizeof(n));
+---
+>   if (luai_numeq(n, 0))  /* avoid problems with -0 */
+>     return gnode(t, 0);
+</PRE>
+
+<LI>
+<A NAME="5.1.2-7"></A>Too many variables in an assignment may cause a C stack overflow.
+<BR><SPAN CLASS="note">reported by Mike Pall on 31 Jul 2007.
+existed since 5.0.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+$ ulimit -s 1024       # Reduce C stack to 1MB for quicker results
+$ lua -e 'local s = "a,"; for i=1,18 do s = s..s end print(loadstring("local a;"..s.."a=nil", ""))'
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lparser.c:
+@@ -938,6 +938,8 @@
+     primaryexp(ls, &amp;nv.v);
+     if (nv.v.k == VLOCAL)
+       check_conflict(ls, lh, &amp;nv.v);
++    luaY_checklimit(ls->fs, nvars, LUAI_MAXCCALLS - ls->L->nCcalls,
++                    "variable names");
+     assignment(ls, &amp;nv, nvars+1);
+   }
+   else {  /* assignment -> `=' explist1 */
+</PRE>
+
+<LI>
+<A NAME="5.1.2-8"></A>An error in a module loaded through the '-l' option
+shows no traceback.
+<BR><SPAN CLASS="note">reported by David Manura on 25 Aug 2007.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">lua -ltemp    (assuming temp.lua has an error)</PRE>
+<P>Patch:<PRE CLASS="patch">
+lua.c:
+@@ -144,7 +144,7 @@
+ static int dolibrary (lua_State *L, const char *name) {
+   lua_getglobal(L, "require");
+   lua_pushstring(L, name);
+-  return report(L, lua_pcall(L, 1, 0, 0));
++  return report(L, docall(L, 1, 1));
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.2-9"></A><CODE>gsub</CODE> may go wild when wrongly called without its third
+argument and with a large subject.
+<BR><SPAN CLASS="note">reported by Florian Berger on 26 Oct 2007.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+x = string.rep('a', 10000) .. string.rep('b', 10000)
+print(#string.gsub(x, 'b'))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lstrlib.c:
+@@ -631,6 +631,2 @@
+     }
+-    default: {
+-      luaL_argerror(L, 3, "string/function/table expected"); 
+-      return;
+-    }
+   }
+@@ -650,2 +646,3 @@
+   const char *p = luaL_checkstring(L, 2);
++  int  tr = lua_type(L, 3);
+   int max_s = luaL_optint(L, 4, srcl+1);
+@@ -655,2 +652,5 @@
+   luaL_Buffer b;
++  luaL_argcheck(L, tr == LUA_TNUMBER || tr == LUA_TSTRING ||
++                   tr == LUA_TFUNCTION || tr == LUA_TTABLE, 3,
++                      "string/function/table expected");
+   luaL_buffinit(L, &amp;b);
+</PRE>
+
+<LI>
+<A NAME="5.1.2-10"></A><CODE>table.remove</CODE> removes last element of a table when given
+an out-of-bound index.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 13 Nov 2007.
+existed since 5.0 at least.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = {1,2,3}
+table.remove(a, 4)
+print(a[3])   --> nil   (should be 3)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ltablib.c:
+@@ -118,7 +118,8 @@
+ static int tremove (lua_State *L) {
+   int e = aux_getn(L, 1);
+   int pos = luaL_optint(L, 2, e);
+-  if (e == 0) return 0;  /* table is `empty' */
++  if (!(1 <= pos &amp;&amp; pos <= e))  /* position is outside bounds? */
++   return 0;  /* nothing to remove */
+   luaL_setn(L, 1, e - 1);  /* t.n = n-1 */
+   lua_rawgeti(L, 1, pos);  /* result = t[pos] */
+   for ( ;pos&amp;lt;e; pos++) {
+</PRE>
+
+<LI>
+<A NAME="5.1.2-11"></A><CODE>lua_setfenv</CODE> may crash if called over an invalid object.
+<BR><SPAN CLASS="note">reported by Mike Pall on 28 Nov 2007.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+> debug.setfenv(3, {})
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lapi.c:
+@@ -749,7 +749,7 @@
+       res = 0;
+       break;
+   }
+-  luaC_objbarrier(L, gcvalue(o), hvalue(L->top - 1));
++  if (res) luaC_objbarrier(L, gcvalue(o), hvalue(L->top - 1));
+   L->top--;
+   lua_unlock(L);
+   return res;
+</PRE>
+
+<LI>
+<A NAME="5.1.2-12"></A>Stand-alone interpreter shows incorrect error message
+when the "message" is a coroutine.
+<BR><SPAN CLASS="note">reported by Patrick Donnelly on 17 Dec 2007.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+> error(coroutine.create(function() end))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lua.c:
+@@ -74,6 +74,8 @@
+ 
+ 
+ static int traceback (lua_State *L) {
++  if (!lua_isstring(L, 1))  /* 'message' not a string? */
++    return 1;  /* keep it intact */
+   lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+   if (!lua_istable(L, -1)) {
+     lua_pop(L, 1);
+
+</PRE>
+
+<LI>
+<A NAME="5.1.2-13"></A><CODE>debug.sethook/gethook</CODE> may overflow the thread's stack.
+<BR><SPAN CLASS="note">reported by Ivko Stanilov on 04 Jan 2008.
+existed since 5.1.
+fixed in 5.1.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = coroutine.create(function() yield() end)
+coroutine.resume(a)
+debug.sethook(a)      -- may overflow the stack of 'a'
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldblib.c:
+@@ -268,12 +268,11 @@
+     count = luaL_optint(L, arg+3, 0);
+     func = hookf; mask = makemask(smask, count);
+   }
+-  gethooktable(L1);
+-  lua_pushlightuserdata(L1, L1);
++  gethooktable(L);
++  lua_pushlightuserdata(L, L1);
+   lua_pushvalue(L, arg+1);
+-  lua_xmove(L, L1, 1);
+-  lua_rawset(L1, -3);  /* set new hook */
+-  lua_pop(L1, 1);  /* remove hook table */
++  lua_rawset(L, -3);  /* set new hook */
++  lua_pop(L, 1);  /* remove hook table */
+   lua_sethook(L1, func, mask, count);  /* set hooks */
+   return 0;
+ }
+@@ -288,11 +287,10 @@
+   if (hook != NULL &amp;&amp; hook != hookf)  /* external hook? */
+     lua_pushliteral(L, "external hook");
+   else {
+-    gethooktable(L1);
+-    lua_pushlightuserdata(L1, L1);
+-    lua_rawget(L1, -2);   /* get hook */
+-    lua_remove(L1, -2);  /* remove hook table */
+-    lua_xmove(L1, L, 1);
++    gethooktable(L);
++    lua_pushlightuserdata(L, L1);
++    lua_rawget(L, -2);   /* get hook */
++    lua_remove(L, -2);  /* remove hook table */
+   }
+   lua_pushstring(L, unmakemask(mask, buff));
+   lua_pushinteger(L, lua_gethookcount(L1));
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.1.1">Lua 5.1.1</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1.1-1">1</A> &middot;
+<A HREF="#5.1.1-2">2</A> &middot;
+<A HREF="#5.1.1-3">3</A> &middot;
+<A HREF="#5.1.1-4">4</A> &middot;
+<A HREF="#5.1.1-5">5</A> &middot;
+<A HREF="#5.1.1-6">6</A> &middot;
+<A HREF="#5.1.1-7">7</A> &middot;
+<A HREF="#5.1.1-8">8</A> &middot;
+<A HREF="#5.1.1-9">9</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1.1-1"></A>List constructors have wrong limit.
+<BR><SPAN CLASS="note">reported by Norman Ramsey on 5 Jun 2006.
+existed since Lua 5.1.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = {}
+a[1] = "x={1"
+for i = 2, 2^20 do
+  a[i] = 1
+end
+a[#a + 1] = "}"
+s = table.concat(a, ",")
+assert(loadstring(s))()
+print(#x)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lparser.c:
+@@ -489,7 +489,7 @@
+
+ static void listfield (LexState *ls, struct ConsControl *cc) {
+   expr(ls, &amp;cc->v);
+-  luaY_checklimit(ls->fs, cc->na, MAXARG_Bx, "items in a constructor");
++  luaY_checklimit(ls->fs, cc->na, MAX_INT, "items in a constructor");
+   cc->na++;
+   cc->tostore++;
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.1-2"></A>Wrong message error in some cases involving closures.
+<BR><SPAN CLASS="note">reported by Shmuel Zeigerman on 8 Jul 2006.
+existed since Lua 5.1.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+local Var
+local function main()
+  NoSuchName (function() Var=0 end)
+end
+main()
+</PRE>
+The error message is
+<EM>attempt to call upvalue 'Var' (a nil value)</EM>.
+It should be
+<EM>attempt to call global 'NoSuchName' (a nil value)</EM>.
+<P>Patch:<PRE CLASS="patch">
+ldebug.c:
+@@ -435,14 +435,16 @@
+         break;
+       }
+       case OP_CLOSURE: {
+-        int nup;
++        int nup, j;
+         check(b < pt->sizep);
+         nup = pt->p[b]->nups;
+         check(pc + nup < pt->sizecode);
+-        for (; nup>0; nup--) {
+-          OpCode op1 = GET_OPCODE(pt->code[pc+nup]);
++        for (j = 1; j <= nup; j++) {
++          OpCode op1 = GET_OPCODE(pt->code[pc + j]);
+           check(op1 == OP_GETUPVAL || op1 == OP_MOVE);
+         }
++        if (reg != NO_REG)  /* tracing? */
++          pc += nup;  /* do not 'execute' these pseudo-instructions */
+         break;
+       }
+       case OP_VARARG: {
+</PRE>
+
+<LI>
+<A NAME="5.1.1-3"></A><CODE>string.format("%")</CODE> may read past the string.
+<BR><SPAN CLASS="note">reported by Roberto in Sep 2006.
+existed since 5.0 at least.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(string.format("%"))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lstrlib.c:
+@@ -723,7 +723,7 @@
+
+ static const char *scanformat (lua_State *L, const char *strfrmt, char *form) {
+   const char *p = strfrmt;
+-  while (strchr(FLAGS, *p)) p++;  /* skip flags */
++  while (*p != '\0' &amp;&amp; strchr(FLAGS, *p) != NULL) p++;  /* skip flags */
+   if ((size_t)(p - strfrmt) >= sizeof(FLAGS))
+     luaL_error(L, "invalid format (repeated flags)");
+   if (isdigit(uchar(*p))) p++;  /* skip width */
+</PRE>
+
+<LI>
+<A NAME="5.1.1-4"></A><CODE>os.date</CODE> throws an error when result is the empty string.
+<BR><SPAN CLASS="note">reported by Nick Gammon on 15 Sep 2006.
+existed since 4.0.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(os.date(""))</PRE>
+<P>Patch:<PRE CLASS="patch">
+loslib.c:
+@@ -148,7 +148,18 @@
+   else {
+-    char b[256];
+-    if (strftime(b, sizeof(b), s, stm))
+-      lua_pushstring(L, b);
+-    else
+-      return luaL_error(L, LUA_QL("date") " format too long");
++    char cc[3];
++    luaL_Buffer b;
++    cc[0] = '%'; cc[2] = '\0';
++    luaL_buffinit(L, &amp;b);
++    for (; *s; s++) {
++      if (*s != '%' || *(s + 1) == '\0')  /* no conversion specifier? */
++        luaL_addchar(&amp;b, *s);
++      else {
++        size_t reslen;
++        char buff[200];  /* should be big enough for any conversion result */
++        cc[1] = *(++s);
++        reslen = strftime(buff, sizeof(buff), cc, stm);
++        luaL_addlstring(&amp;b, buff, reslen);
++      }
++    }
++    luaL_pushresult(&amp;b);
+   }
+</PRE>
+
+<LI>
+<A NAME="5.1.1-5"></A><CODE>setfenv</CODE> accepts invalid first argument.
+<BR><SPAN CLASS="note">reported by Doug Rogers in 8 Feb 2007.
+existed since 5.0.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+setfenv(nil, {})   -- should throw an error</PRE>
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+@@ -116,3 +116,3 @@
+
+-static void getfunc (lua_State *L) {
++static void getfunc (lua_State *L, int opt) {
+   if (lua_isfunction(L, 1)) lua_pushvalue(L, 1);
+@@ -120,3 +120,3 @@
+     lua_Debug ar;
+-    int level = luaL_optint(L, 1, 1);
++    int level = opt ? luaL_optint(L, 1, 1) : luaL_checkint(L, 1);
+     luaL_argcheck(L, level >= 0, 1, "level must be non-negative");
+@@ -133,3 +133,3 @@
+ static int luaB_getfenv (lua_State *L) {
+-  getfunc(L);
++  getfunc(L, 1);
+   if (lua_iscfunction(L, -1))  /* is a C function? */
+@@ -144,3 +144,3 @@
+   luaL_checktype(L, 2, LUA_TTABLE);
+-  getfunc(L);
++  getfunc(L, 0);
+   lua_pushvalue(L, 2);
+</PRE>
+
+<LI>
+<A NAME="5.1.1-6"></A>Wrong code generated for arithmetic expressions in some specific scenarios.
+<BR><SPAN CLASS="note">reported by Thierry Grellier on 19 Jan 2007.
+existed since 5.1.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+-- use a large number of names (almost 256)
+v1=1; v2=1; v3=1; v4=1; v5=1; v6=1; v7=1; v8=1; v9=1;
+v10=1; v11=1; v12=1; v13=1; v14=1; v15=1; v16=1; v17=1;
+v18=1; v19=1; v20=1; v21=1; v22=1; v23=1; v24=1; v25=1;
+v26=1; v27=1; v28=1; v29=1; v30=1; v31=1; v32=1; v33=1;
+v34=1; v35=1; v36=1; v37=1; v38=1; v39=1; v40=1; v41=1;
+v42=1; v43=1; v44=1; v45=1; v46=1; v47=1; v48=1; v49=1;
+v50=1; v51=1; v52=1; v53=1; v54=1; v55=1; v56=1; v57=1;
+v58=1; v59=1; v60=1; v61=1; v62=1; v63=1; v64=1; v65=1;
+v66=1; v67=1; v68=1; v69=1; v70=1; v71=1; v72=1; v73=1;
+v74=1; v75=1; v76=1; v77=1; v78=1; v79=1; v80=1; v81=1;
+v82=1; v83=1; v84=1; v85=1; v86=1; v87=1; v88=1; v89=1;
+v90=1; v91=1; v92=1; v93=1; v94=1; v95=1; v96=1; v97=1;
+v98=1; v99=1; v100=1; v101=1; v102=1; v103=1; v104=1; v105=1;
+v106=1; v107=1; v108=1; v109=1; v110=1; v111=1; v112=1; v113=1;
+v114=1; v115=1; v116=1; v117=1; v118=1; v119=1; v120=1; v121=1;
+v122=1; v123=1; v124=1; v125=1; v126=1; v127=1; v128=1; v129=1;
+v130=1; v131=1; v132=1; v133=1; v134=1; v135=1; v136=1; v137=1;
+v138=1; v139=1; v140=1; v141=1; v142=1; v143=1; v144=1; v145=1;
+v146=1; v147=1; v148=1; v149=1; v150=1; v151=1; v152=1; v153=1;
+v154=1; v155=1; v156=1; v157=1; v158=1; v159=1; v160=1; v161=1;
+v162=1; v163=1; v164=1; v165=1; v166=1; v167=1; v168=1; v169=1;
+v170=1; v171=1; v172=1; v173=1; v174=1; v175=1; v176=1; v177=1;
+v178=1; v179=1; v180=1; v181=1; v182=1; v183=1; v184=1; v185=1;
+v186=1; v187=1; v188=1; v189=1; v190=1; v191=1; v192=1; v193=1;
+v194=1; v195=1; v196=1; v197=1; v198=1; v199=1; v200=1; v201=1;
+v202=1; v203=1; v204=1; v205=1; v206=1; v207=1; v208=1; v209=1;
+v210=1; v211=1; v212=1; v213=1; v214=1; v215=1; v216=1; v217=1;
+v218=1; v219=1; v220=1; v221=1; v222=1; v223=1; v224=1; v225=1;
+v226=1; v227=1; v228=1; v229=1; v230=1; v231=1; v232=1; v233=1;
+v234=1; v235=1; v236=1; v237=1; v238=1; v239=1; v240=1; v241=1;
+v242=1; v243=1; v244=1; v245=1; v246=1; v247=1; v248=1; v249=1;
+v250=1;
+v251={k1 = 1};
+v252=1;
+print(2 * v251.k1, v251.k1 * 2);   -- 2 2, OK
+v253=1;
+print(2 * v251.k1, v251.k1 * 2);   -- 1 2, ???
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lcode.c:
+@@ -657,10 +657,16 @@
+   if (constfolding(op, e1, e2))
+     return;
+   else {
+-    int o1 = luaK_exp2RK(fs, e1);
+     int o2 = (op != OP_UNM &amp;&amp; op != OP_LEN) ? luaK_exp2RK(fs, e2) : 0;
+-    freeexp(fs, e2);
+-    freeexp(fs, e1);
++    int o1 = luaK_exp2RK(fs, e1);
++    if (o1 > o2) {
++      freeexp(fs, e1);
++      freeexp(fs, e2);
++    }
++    else {
++      freeexp(fs, e2);
++      freeexp(fs, e1);
++    }
+     e1->u.s.info = luaK_codeABC(fs, op, 0, o1, o2);
+     e1->k = VRELOCABLE;
+   }
+@@ -718,10 +724,15 @@
+       luaK_exp2nextreg(fs, v);  /* operand must be on the `stack' */
+       break;
+     }
+-    default: {
++    case OPR_ADD: case OPR_SUB: case OPR_MUL: case OPR_DIV:
++    case OPR_MOD: case OPR_POW: {
+       if (!isnumeral(v)) luaK_exp2RK(fs, v);
+       break;
+     }
++    default: {
++      luaK_exp2RK(fs, v);
++      break;
++    }
+   }
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1.1-7"></A>Assignment of nil to parameter may be optimized away.
+<BR><SPAN CLASS="note">reported by Thomas Lauer on 21 Mar 2007.
+existed since 5.1.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+function f (a)
+  a=nil
+  return a
+end
+
+print(f("test"))
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lcode.c:
+@@ -35,16 +35,20 @@
+ void luaK_nil (FuncState *fs, int from, int n) {
+   Instruction *previous;
+   if (fs->pc > fs->lasttarget) {  /* no jumps to current position? */
+-    if (fs->pc == 0)  /* function start? */
+-      return;  /* positions are already clean */
+-    previous = &amp;fs->f->code[fs->pc-1];
+-    if (GET_OPCODE(*previous) == OP_LOADNIL) {
+-      int pfrom = GETARG_A(*previous);
+-      int pto = GETARG_B(*previous);
+-      if (pfrom <= from &amp;&amp; from <= pto+1) {  /* can connect both? */
+-        if (from+n-1 > pto)
+-          SETARG_B(*previous, from+n-1);
+-        return;
++    if (fs->pc == 0) {  /* function start? */
++      if (from >= fs->nactvar)
++        return;  /* positions are already clean */
++    }
++    else {
++      previous = &amp;fs->f->code[fs->pc-1];
++      if (GET_OPCODE(*previous) == OP_LOADNIL) {
++        int pfrom = GETARG_A(*previous);
++        int pto = GETARG_B(*previous);
++        if (pfrom <= from &amp;&amp; from <= pto+1) {  /* can connect both? */
++          if (from+n-1 > pto)
++            SETARG_B(*previous, from+n-1);
++          return;
++        }
+       }
+     }
+   }
+</PRE>
+
+<LI>
+<A NAME="5.1.1-8"></A>Concat metamethod converts numbers to strings.
+<BR><SPAN CLASS="note">reported by Paul Winwood on 24 Dec 2006.
+existed since 5.0.
+fixed in 5.1.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = {}
+setmetatable(a, {__concat = function (a,b) print(type(a), type(b)) end})
+a = 4 .. a
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+@@ -281,10 +281,12 @@
+   do {
+     StkId top = L->base + last + 1;
+     int n = 2;  /* number of elements handled in this pass (at least 2) */
+-    if (!tostring(L, top-2) || !tostring(L, top-1)) {
++    if (!(ttisstring(top-2) || ttisnumber(top-2)) || !tostring(L, top-1)) {
+       if (!call_binTM(L, top-2, top-1, top-2, TM_CONCAT))
+         luaG_concaterror(L, top-2, top-1);
+-    } else if (tsvalue(top-1)->len > 0) {  /* if len=0, do nothing */
++    } else if (tsvalue(top-1)->len == 0)  /* second op is empty? */
++      (void)tostring(L, top - 2);  /* result is first op (as string) */
++    else {
+       /* at least two string values; get as many as possible */
+       size_t tl = tsvalue(top-1)->len;
+       char *buffer;
+</PRE>
+
+<LI>
+<A NAME="5.1.1-9"></A>loadlib.c is a library and should not access Lua internals (via lobject.h).
+<BR><SPAN CLASS="note">reported by Jérôme Vuarand on 25 Mar 2007.
+existed since 5.0 at least.
+fixed in 5.1.2.</SPAN>
+<P>Example:
+The bug has no effect on external behavior.
+<P>Patch:
+In loadlib.c, change all ocurrences of <CODE>luaO_pushfstring</CODE> to
+<CODE>lua_pushfstring</CODE>.
+
+</OL>
+
+<H2><A NAME="5.1">Lua 5.1</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.1-1">1</A> &middot;
+<A HREF="#5.1-2">2</A> &middot;
+<A HREF="#5.1-3">3</A> &middot;
+<A HREF="#5.1-4">4</A> &middot;
+<A HREF="#5.1-5">5</A> &middot;
+<A HREF="#5.1-6">6</A> &middot;
+<A HREF="#5.1-7">7</A> &middot;
+<A HREF="#5.1-8">8</A> &middot;
+<A HREF="#5.1-9">9</A> &middot;
+<A HREF="#5.1-10">10</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.1-1"></A>In 16-bit machines, and/or expressions with numeric constants as the
+right operand may result in weird values.
+<BR><SPAN CLASS="note">reported by Andreas Stenius on 15 Mar 2006.
+fixed in 5.1.1.</SPAN>
+<P>Example:<PRE CLASS="example">
+print(false or 0)   -- on 16-bit machines
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lcode.c:
+@@ -731,17 +731,15 @@
+     case OPR_AND: {
+       lua_assert(e1->t == NO_JUMP);  /* list must be closed */
+       luaK_dischargevars(fs, e2);
+-      luaK_concat(fs, &amp;e1->f, e2->f);
+-      e1->k = e2->k; e1->u.s.info = e2->u.s.info;
+-      e1->u.s.aux = e2->u.s.aux; e1->t = e2->t;
++      luaK_concat(fs, &amp;e2->f, e1->f);
++      *e1 = *e2;
+       break;
+     }
+     case OPR_OR: {
+       lua_assert(e1->f == NO_JUMP);  /* list must be closed */
+       luaK_dischargevars(fs, e2);
+-      luaK_concat(fs, &amp;e1->t, e2->t);
+-      e1->k = e2->k; e1->u.s.info = e2->u.s.info;
+-      e1->u.s.aux = e2->u.s.aux; e1->f = e2->f;
++      luaK_concat(fs, &amp;e2->t, e1->t);
++      *e1 = *e2;
+       break;
+     }
+</PRE>
+
+<LI>
+<A NAME="5.1-2"></A><CODE>luaL_checkudata</CODE> may produce wrong error message.
+<BR><SPAN CLASS="note">reported by Greg Falcon on 21 Mar 2006.
+fixed in 5.1.1.</SPAN>
+<P>Example:<PRE CLASS="example">
+getmetatable(io.stdin).__gc()
+  --> bad argument #1 to '__gc' (FILE* expected, got table)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lauxlib.c:
+@@ -123,11 +123,17 @@
+
+ LUALIB_API void *luaL_checkudata (lua_State *L, int ud, const char *tname) {
+   void *p = lua_touserdata(L, ud);
+-  lua_getfield(L, LUA_REGISTRYINDEX, tname);  /* get correct metatable */
+-  if (p == NULL || !lua_getmetatable(L, ud) || !lua_rawequal(L, -1, -2))
+-    luaL_typerror(L, ud, tname);
+-  lua_pop(L, 2);  /* remove both metatables */
+-  return p;
++  if (p != NULL) {  /* value is a userdata? */
++    if (lua_getmetatable(L, ud)) {  /* does it have a metatable? */
++      lua_getfield(L, LUA_REGISTRYINDEX, tname);  /* get correct metatable */
++      if (lua_rawequal(L, -1, -2)) {  /* does it have the correct mt? */
++        lua_pop(L, 2);  /* remove both metatables */
++        return p;
++      }
++    }
++  }
++  luaL_typerror(L, ud, tname);  /* else error */
++  return NULL;  /* to avoid warnings */
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1-3"></A>Windows applications that use both Lua and DirectX
+may present erractic behavior.
+<EM>THIS IS NOT A BUG IN Lua!</EM>
+The problem is that DirectX violates an ABI that Lua depends on.
+<P>Patch:
+The simplest solution is to use DirectX with
+the <CODE>D3DCREATE_FPU_PRESERVE</CODE> flag.
+
+Otherwise, you can change the definition of <CODE>lua_number2int</CODE>
+in luaconf.h to this one:
+<PRE CLASS="patch">
+#define lua_number2int(i,d)   __asm fld d   __asm fistp i
+</PRE>
+
+<LI>
+<A NAME="5.1-4"></A>Option '%q' in <CODE>string.formatE</CODE> does not handle '\r' correctly.
+<BR><SPAN CLASS="note">reported by FleetCommand on 1 Apr 2006.
+fixed in 5.1.1.</SPAN>
+<P>Example:<PRE CLASS="example">
+local s = "a string with \r and \n and \r\n and \n\r"
+local c = string.format("return %q", s)
+assert(assert(loadstring(c))() == s)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lstrlib.c:
+@@ -703,6 +703,10 @@
+         luaL_addchar(b, *s);
+         break;
+       }
++      case '\r': {
++        luaL_addlstring(b, "\\r", 2);
++        break;
++      }
+       case '\0': {
+         luaL_addlstring(b, "\\000", 4);
+         break;
+</PRE>
+
+<LI>
+<A NAME="5.1-5"></A><CODE>luaL_dofile</CODE> and <CODE>luaL_dostring</CODE>
+should return all values returned by the chunk.
+<BR><SPAN CLASS="note">reported by mos on 11 Apr 2006.
+fixed in 5.1.1.</SPAN>
+<P>Patch:<PRE CLASS="patch">
+lauxlib.h:
+@@ -108,9 +108,11 @@
+
+ #define luaL_typename(L,i)     lua_typename(L, lua_type(L,(i)))
+
+-#define luaL_dofile(L, fn)     (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 0))
++#define luaL_dofile(L, fn) \
++       (luaL_loadfile(L, fn) || lua_pcall(L, 0, LUA_MULTRET, 0))
+
+-#define luaL_dostring(L, s)    (luaL_loadstring(L, s) || lua_pcall(L, 0, 0, 0))
++#define luaL_dostring(L, s) \
++       (luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
+
+ #define luaL_getmetatable(L,n) (lua_getfield(L, LUA_REGISTRYINDEX, (n)))
+</PRE>
+
+<LI>
+<A NAME="5.1-6"></A>Garbage collector does not compensate enough for finalizers.
+<BR><SPAN CLASS="note">reported by Roberto in May 2006.
+fixed in 5.1.1.</SPAN>
+<P>Patch:<PRE CLASS="patch">
+lgc.c:
+@@ -322,4 +322,6 @@
+
+-static void propagateall (global_State *g) {
+-  while (g->gray) propagatemark(g);
++static size_t propagateall (global_State *g) {
++  size_t m = 0;
++  while (g->gray) m += propagatemark(g);
++  return m;
+ }
+@@ -542,3 +544,3 @@
+   marktmu(g);  /* mark `preserved' userdata */
+-  propagateall(g);  /* remark, to propagate `preserveness' */
++  udsize += propagateall(g);  /* remark, to propagate `preserveness' */
+   cleartable(g->weak);  /* remove collected objects from weak tables */
+@@ -592,2 +594,4 @@
+         GCTM(L);
++        if (g->estimate > GCFINALIZECOST)
++          g->estimate -= GCFINALIZECOST;
+</PRE>
+
+<LI>
+<A NAME="5.1-7"></A>Debug hooks may get wrong when mixed with coroutines.
+<BR><SPAN CLASS="note">reported by Ivko Stanilov on 3 Jun 2006.
+fixed in 5.1.1.</SPAN>
+<P>Example:<PRE CLASS="example">
+co = coroutine.create(function () coroutine.yield() end)
+debug.sethook(co, function() end, "lr")
+coroutine.resume(co)
+coroutine.resume(co)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+@@ -389,6 +389,7 @@
+       return;
+   }
+   else {  /* resuming from previous yield */
++    L->status = 0;
+     if (!f_isLua(ci)) {  /* `common' yield? */
+       /* finish interrupted execution of `OP_CALL' */
+       lua_assert(GET_OPCODE(*((ci-1)->savedpc - 1)) == OP_CALL ||
+@@ -399,7 +400,6 @@
+     else  /* yielded inside a hook: just continue its execution */
+       L->base = L->ci->base;
+   }
+-  L->status = 0;
+   luaV_execute(L, cast_int(L->ci - L->base_ci));
+ }
+</PRE>
+
+<LI>
+<A NAME="5.1-8"></A><A HREF="#5.1.1-1">List constructors have wrong limit.</A>
+
+<LI>
+<A NAME="5.1-9"></A><A HREF="#5.1.1-2">Wrong message error in some cases involving closures.</A>
+
+<LI>
+<A NAME="5.1-10"></A><A HREF="#5.1.1-6">Wrong code generated for arithmetic expressions in some specific scenarios.</A>
+
+</OL>
+
+<H2><A NAME="5.0.3">Lua 5.0.3</A></H2>
+That was the last release of Lua 5.0.
+Any remaining bugs are probably fixed in Lua 5.1.
+
+<H2><A NAME="5.0.2">Lua 5.0.2</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.0.2-1">1</A> &middot;
+<A HREF="#5.0.2-2">2</A> &middot;
+<A HREF="#5.0.2-3">3</A> &middot;
+<A HREF="#5.0.2-4">4</A> &middot;
+<A HREF="#5.0.2-5">5</A> &middot;
+<A HREF="#5.0.2-6">6</A> &middot;
+<A HREF="#5.0.2-7">7</A> &middot;
+<A HREF="#5.0.2-8">8</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.0.2-1"></A>String concatenation may cause arithmetic overflow,
+leading to a buffer overflow.
+<BR><SPAN CLASS="note">reported by Rici Lake on 20 May 2004.
+fixed in 5.1 and 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+longs = string.rep("\0", 2^25)
+function catter(i)
+    return assert(loadstring(
+      string.format("return function(a) return a%s end",
+                     string.rep("..a", i-1))))()
+end
+rep129 = catter(129)
+rep129(longs)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+@@ -321,15 +321,15 @@
+         luaG_concaterror(L, top-2, top-1);
+     } else if (tsvalue(top-1)->tsv.len > 0) {  /* if len=0, do nothing */
+       /* at least two string values; get as many as possible */
+-      lu_mem tl = cast(lu_mem, tsvalue(top-1)->tsv.len) +
+-                  cast(lu_mem, tsvalue(top-2)->tsv.len);
++      size_t tl = tsvalue(top-1)->tsv.len;
+       char *buffer;
+       int i;
+-      while (n < total &amp;&amp; tostring(L, top-n-1)) {  /* collect total length */
+-        tl += tsvalue(top-n-1)->tsv.len;
+-        n++;
++      /* collect total length */
++      for (n = 1; n < total &amp;&amp; tostring(L, top-n-1); n++) {
++        size_t l = tsvalue(top-n-1)->tsv.len;
++        if (l >= MAX_SIZET - tl) luaG_runerror(L, "string length overflow");
++        tl += l;
+       }
+-      if (tl > MAX_SIZET) luaG_runerror(L, "string size overflow");
+       buffer = luaZ_openspace(L, &amp;G(L)->buff, tl);
+       tl = 0;
+       for (i=n; i>0; i--) {  /* concat all strings */
+</PRE>
+
+<LI>
+<A NAME="5.0.2-2"></A><CODE>lua_getupvalue</CODE> and <CODE>lua_setupvalue</CODE> do not check for index too small.
+<BR><SPAN CLASS="note">reported by Mike Pall on 6 Jun 2004.
+fixed in 5.1 and 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+debug.getupvalue(function() end, 0)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lapi.c
+941c941
+<     if (n > f->c.nupvalues) return NULL;
+---
+>     if (!(1 <= n &amp;&amp; n <= f->c.nupvalues)) return NULL;
+947c947
+<     if (n > p->sizeupvalues) return NULL;
+---
+>     if (!(1 <= n &amp;&amp; n <= p->sizeupvalues)) return NULL;
+</PRE>
+
+<LI>
+<A NAME="5.0.2-3"></A>Values held in open upvalues of suspended threads may be incorrectly collected.
+<BR><SPAN CLASS="note">reported by Spencer Schumann on 31 Dec 2004.
+fixed in 5.1 and 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+local thread_id = 0
+local threads = {}
+
+function fn(thread)
+    thread_id = thread_id + 1
+    threads[thread_id] = function()
+                             thread = nil
+                         end
+    coroutine.yield()
+end
+
+while true do
+    local thread = coroutine.create(fn)
+    coroutine.resume(thread, thread)
+end
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lgc.c:
+221,224c221,222
+<       if (!u->marked) {
+<         markobject(st, &amp;u->value);
+<         u->marked = 1;
+<       }
+---
+>       markobject(st, u->v);
+>       u->marked = 1;
+</PRE>
+
+<LI>
+<A NAME="5.0.2-4"></A><CODE>rawset</CODE> and <CODE>rawget</CODE> do not ignore extra arguments.
+<BR><SPAN CLASS="note">reported by Romulo Bahiense on 11 Mar 2005.
+fixed in 5.1 and 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = {}
+rawset(a, 1, 2, 3)
+print(a[1], a[2])    -- should be 2 and nil
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+175a176
+>   lua_settop(L, 2);
+183a185
+>   lua_settop(L, 3);
+</PRE>
+
+<LI>
+<A NAME="5.0.2-5"></A>Weak tables that survive one collection are never collected.
+<BR><SPAN CLASS="note">reported by Chromix on 2 Jan 2006.
+fixed in 5.1 and 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = {}
+print(gcinfo())
+for i = 1, 10000 do
+  a[i] = setmetatable({}, {__mode = "v"})
+end
+collectgarbage()
+a = nil
+collectgarbage()
+print(gcinfo())
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lgc.c
+@@ -366,7 +366,7 @@
+   GCObject *curr;
+   int count = 0;  /* number of collected items */
+   while ((curr = *p) != NULL) {
+-    if (curr->gch.marked > limit) {
++    if ((curr->gch.marked &amp; ~(KEYWEAK | VALUEWEAK)) > limit) {
+       unmark(curr);
+       p = &amp;curr->gch.next;
+     }
+</PRE>
+
+<LI>
+<A NAME="5.0.2-6"></A><A HREF="#5.1-6">Garbage collector does not compensate enough for finalizers.</A>
+
+<LI>
+<A NAME="5.0.2-7"></A>Some "not not" expressions may not result in boolean values.
+<BR><SPAN CLASS="note">reported by Aaron Brown on 30 Jun 2005.
+existed since 4.0.
+fixed in 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+-- should print false, but prints nil
+print(not not (nil and 4))
+</PRE>
+
+<LI>
+<A NAME="5.0.2-8"></A>On some machines, closing a "piped file" (created with <CODE>io.popen</CODE>) may crash Lua.
+<BR><SPAN CLASS="note">reported by Mike Pall on 23 May 2005.
+existed since 5.0.
+fixed in 5.0.3.</SPAN>
+<P>Example:<PRE CLASS="example">
+  f = io.popen("ls")
+  f:close()
+</PRE>
+
+</OL>
+
+<H2><A NAME="5.0">Lua 5.0</A>
+<SPAN CLASS="bugs">
+<A HREF="#5.0-1">1</A> &middot;
+<A HREF="#5.0-2">2</A> &middot;
+<A HREF="#5.0-3">3</A> &middot;
+<A HREF="#5.0-4">4</A> &middot;
+<A HREF="#5.0-5">5</A> &middot;
+<A HREF="#5.0-6">6</A> &middot;
+<A HREF="#5.0-7">7</A> &middot;
+<A HREF="#5.0-8">8</A> &middot;
+<A HREF="#5.0-9">9</A> &middot;
+<A HREF="#5.0-10">10</A> &middot;
+<A HREF="#5.0-11">11</A> &middot;
+<A HREF="#5.0-12">12</A> &middot;
+<A HREF="#5.0-13">13</A> &middot;
+<A HREF="#5.0-14">14</A> &middot;
+<A HREF="#5.0-15">15</A> &middot;
+<A HREF="#5.0-16">16</A> &middot;
+<A HREF="#5.0-17">17</A>
+</SPAN>
+</H2>
+
+<OL>
+
+<LI>
+<A NAME="5.0-1"></A><CODE>lua_closethread</CODE> exists only in the manual.
+<BR><SPAN CLASS="note">reported by Nguyen Binh on 28 Apr 2003.
+fixed in 5.0.2.</SPAN>
+<BR><BR>Patch:
+The manual is wrong: threads are subject to garbage collection.
+
+<LI>
+<A NAME="5.0-2"></A>Attempt to resume a running coroutine crashes Lua.
+<BR><SPAN CLASS="note">reported by Alex Bilyk on 9 May 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+function co_func (current_co)
+   coroutine.resume(co)
+end
+co = coroutine.create(co_func)
+coroutine.resume(co)
+coroutine.resume(co)     --> seg. fault
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+ldo.c:
+325,326c325
+<     if (nargs >= L->top - L->base)
+<       luaG_runerror(L, "cannot resume dead coroutine");
+---
+>     lua_assert(nargs < L->top - L->base);
+329c328,329
+<   else if (ci->state &amp; CI_YIELD) {  /* inside a yield? */
+---
+>   else {  /* inside a yield */
+>     lua_assert(ci->state &amp; CI_YIELD);
+344,345d343
+<   else
+<     luaG_runerror(L, "cannot resume non-suspended coroutine");
+351a350,358
+> static int resume_error (lua_State *L, const char *msg) {
+>   L->top = L->ci->base;
+>   setsvalue2s(L->top, luaS_new(L, msg));
+>   incr_top(L);
+>   lua_unlock(L);
+>   return LUA_ERRRUN;
+> }
+>
+>
+355a363,368
+>   if (L->ci == L->base_ci) {
+>     if (nargs >= L->top - L->base)
+>       return resume_error(L, "cannot resume dead coroutine");
+>   }
+>   else if (!(L->ci->state &amp; CI_YIELD))  /* not inside a yield? */
+>     return resume_error(L, "cannot resume non-suspended coroutine");
+</PRE>
+
+<LI>
+<A NAME="5.0-3"></A><CODE>file:close</CODE> cannot be called without a file (results a crash).
+<BR><SPAN CLASS="note">reported by Tuomo Valkonen on 27 May 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+> io.stdin.close()    -- correct call should be io.stdin:close()
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+liolib.c:
+161c161
+<   if (lua_isnone(L, 1)) {
+---
+>   if (lua_isnone(L, 1) &amp;&amp; lua_type(L, lua_upvalueindex(1)) == LUA_TTABLE) {
+</PRE>
+
+<LI>
+<A NAME="5.0-4"></A>C functions may have stacks larger than current top.
+<BR><SPAN CLASS="note">reported by Alex Bilyk on 9 Jun 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+Must recompile Lua with a change in <CODE>lua.c</CODE> and with <CODE>lua_assert</CODE> defined:
+lua.c:
+381a382
+>   lua_checkstack(l, 1000);
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lgc.c:
+247c247
+<     if (!(ci->state &amp; CI_C) &amp;&amp; lim < ci->top)
+---
+>     if (lim < ci->top)
+</PRE>
+
+<LI>
+<A NAME="5.0-5"></A>'pc' address is invalidated when a coroutine is suspended.
+<BR><SPAN CLASS="note">reported by Nick Trout on 7 Jul 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+function g(x)
+    coroutine.yield(x)
+end
+
+function f (i)
+  debug.sethook(print, "l")
+  for j=1,1000 do
+    g(i+j)
+  end
+end
+
+co = coroutine.wrap(f)
+co(10)
+pcall(co)
+pcall(co)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+402d401
+<   L->ci->u.l.pc = &amp;pc;
+405a405
+>   L->ci->u.l.pc = &amp;pc;
+676,678c676
+<           lua_assert(ci->u.l.pc == &amp;pc &amp;&amp;
+<                      ttisfunction(ci->base - 1) &amp;&amp;
+<                      (ci->state &amp; CI_SAVEDPC));
+---
+>           lua_assert(ttisfunction(ci->base - 1) &amp;&amp; (ci->state &amp; CI_SAVEDPC));
+</PRE>
+
+<LI>
+<A NAME="5.0-6"></A>Userdata to be collected still counts into new GC threshold,
+increasing memory consumption.
+<BR><SPAN CLASS="note">reported by Roberto on 25 Jul 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+a = newproxy(true)
+getmetatable(a).__gc = function () end
+for i=1,10000000 do
+  newproxy(a)
+  if math.mod(i, 10000) == 0 then print(gcinfo()) end
+end
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lgc.h:
+18c18
+< void luaC_separateudata (lua_State *L);
+---
+> size_t luaC_separateudata (lua_State *L);
+
+lgc.c:
+113c113,114
+< void luaC_separateudata (lua_State *L) {
+---
+> size_t luaC_separateudata (lua_State *L) {
+>   size_t deadmem = 0;
+127a129
+>       deadmem += sizeudata(gcotou(curr)->uv.len);
+136a139
+>   return deadmem;
+390c393
+< static void checkSizes (lua_State *L) {
+---
+> static void checkSizes (lua_State *L, size_t deadmem) {
+400c403
+<   G(L)->GCthreshold = 2*G(L)->nblocks;  /* new threshold */
+---
+>   G(L)->GCthreshold = 2*G(L)->nblocks - deadmem;  /* new threshold */
+454c457,458
+< static void mark (lua_State *L) {
+---
+> static size_t mark (lua_State *L) {
+>   size_t deadmem;
+467c471
+<   luaC_separateudata(L);  /* separate userdata to be preserved */
+---
+>   deadmem = luaC_separateudata(L);  /* separate userdata to be preserved */
+475a480
+>   return deadmem;
+480c485
+<   mark(L);
+---
+>   size_t deadmem = mark(L);
+482c487
+<   checkSizes(L);
+---
+>   checkSizes(L, deadmem);
+</PRE>
+
+<LI>
+<A NAME="5.0-7"></A>IBM AS400 (OS400) has sizeof(void *)==16, and a '%p' may generate
+up to 60 characters in a 'printf', causing a buffer overflow in <CODE>tostring</CODE>.
+<BR><SPAN CLASS="note">reported by David Burgess on 25 Aug 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">print{}  -- on an AS400 machine</PRE>
+<P>Patch:<PRE CLASS="patch">
+liolib.c:
+178c178
+<   char buff[32];
+---
+>   char buff[128];
+
+lbaselib.c:
+327c327
+<   char buff[64];
+---
+>   char buff[128];
+</PRE>
+
+<LI>
+<A NAME="5.0-8"></A>Syntax <CODE>local function</CODE> does not increment stack size.
+<BR><SPAN CLASS="note">reported by Rici Lake on 26 Sep 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+-- must run this with precompiled code
+local a,b,c
+local function d () end
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lparser.c:
+1143a1144
+>   FuncState *fs = ls->fs;
+1145c1146,1147
+<   init_exp(&amp;v, VLOCAL, ls->fs->freereg++);
+---
+>   init_exp(&amp;v, VLOCAL, fs->freereg);
+>   luaK_reserveregs(fs, 1);
+1148c1150,1152
+<   luaK_storevar(ls->fs, &amp;v, &amp;b);
+---
+>   luaK_storevar(fs, &amp;v, &amp;b);
+>   /* debug information will only see the variable after this point! */
+>   getlocvar(fs, fs->nactvar - 1).startpc = fs->pc;
+</PRE>
+
+<LI>
+<A NAME="5.0-9"></A>Count hook may be called without being set.
+<BR><SPAN CLASS="note">reported by Andreas Stenius on 6 Oct 2003.
+fixed in 5.0.2.</SPAN>
+<P>Example:
+<BR>Set your hooks as below.
+It is weird to use a positive count without setting the count hook,
+but it is not wrong.
+<PRE CLASS="example">
+lua_sethook(L, my_hook, LUA_MASKLINE | LUA_MASKRET, 1);
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lvm.c:
+69c69
+<   if (mask > LUA_MASKLINE) {  /* instruction-hook set? */
+---
+>   if (mask &amp; LUA_MASKCOUNT) {  /* instruction-hook set? */
+</PRE>
+
+<LI>
+<A NAME="5.0-10"></A><CODE>dofile</CODE> eats one return value when called without arguments.
+<BR><SPAN CLASS="note">reported by Frederico Abraham on 15 Jan 2004.
+fixed in 5.0.2.</SPAN>
+<P>Example:<PRE CLASS="example">
+a,b = dofile()   --< here you enter `return 1,2,3 &lt;eof>'
+print(a,b)   --> 2   3   (should be 1 and 2)
+</PRE>
+<P>Patch:<PRE CLASS="patch">
+lbaselib.c:
+313a314
+>   int n = lua_gettop(L);
+317c318
+<   return lua_gettop(L) - 1;
+---
+>   return lua_gettop(L) - n;
+</PRE>
+
+<LI>
+<A NAME="5.0-11"></A><A HREF="#5.0.2-1">String concatenation may cause arithmetic overflow,
+leading to a buffer overflow.</A>
+
+<LI>
+<A NAME="5.0-12"></A><A HREF="#5.0.2-2"><CODE>lua_getupvalue</CODE> and <CODE>lua_setupvalue</CODE> do not check for index too small.</A>
+
+<LI>
+<A NAME="5.0-13"></A><A HREF="#5.0.2-4"><CODE>rawset</CODE> and <CODE>rawget</CODE> do not ignore extra arguments.</A>
+
+<LI>
+<A NAME="5.0-14"></A><A HREF="#5.0.2-5">Weak tables that survive one collection are never collected.</A>
+
+<LI>
+<A NAME="5.0-15"></A><A HREF="#5.1-6">Garbage collector does not compensate enough for finalizers.</A>
+
+<LI>
+<A NAME="5.0-16"></A><A HREF="#5.0.2-7">Some "not not" expressions may not result in boolean values.</A>
+
+<LI>
+<A NAME="5.0-17"></A><A HREF="#5.0.2-8">On some machines, closing a "piped file" (created with io.popen) may crash Lua.
+</A>
+
+</OL>
+
+<H2><A NAME="4.0">Lua 4.0</A></H2>
+Most bugs in Lua 4.0 have been fixed in Lua 4.0.1.
+
+<OL>
+
+<LI>
+Parser did not accept a ';' after a 'return'.
+<BR><SPAN CLASS="note">reported by lhf on 29 Nov 2000.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+When 'read' fails it must return nil (and not no value).
+<BR><SPAN CLASS="note">reported by Carlos Cassino on 22 Dec 2000.
+fixed in 5.0.</SPAN>
+
+<LI>
+<CODE>lua_pushuserdata(L,NULL)</CODE> does not work.
+<BR><SPAN CLASS="note">reported by Edgar Toernig on 1 Feb 2001.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+<CODE>while 1 dostring[[print('hello\n')]] end</CODE> never reclaims memory.
+<BR><SPAN CLASS="note">reported by Andrew Paton on 2 Feb 2001.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+ESC (which starts precompiled code) in C is \33, not \27.
+<BR><SPAN CLASS="note">reported by Edgar Toernig on 6 Feb 2001.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+Error message for '%a' gave wrong line number.
+<BR><SPAN CLASS="note">reported by Leonardo Constantino on 10 Jul 2001.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+Segmentation fault when rawget/rawset get extra arguments.
+<BR><SPAN CLASS="note">reported by Eric Mauger on 21 Dec 2001.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+Line hook gets wrong 'ar'.
+<BR><SPAN CLASS="note">reported by Daniel Sinclair on 19 Jun 2002.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+'protectedparser' may run GC and then collect 'filename' (in 'parse_file').
+<BR><SPAN CLASS="note">reported by Alex Bilyk on 19 Jun 2002.
+fixed in 4.0.1.</SPAN>
+
+<LI>
+<CODE>ULONG_MAX>>10</CODE> may not fit into an <CODE>int</CODE>.
+<BR><SPAN CLASS="note">reported by Jeff Petkau on 21 Nov 2002.
+fixed in 5.0.</SPAN>
+
+</OL>
+
+<HR>
+<SMALL CLASS="footer">
+Last update:
+Sat Dec  7 09:35:31 BRST 2013
+</SMALL>
+<!--
+Last change: Lua 5.2.3 released
+-->
+
+</BODY>
+</HTML>

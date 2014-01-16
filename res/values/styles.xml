@@ -5,9 +5,29 @@
     </style>
 
     <style name="MyTheme" parent="android:Theme">
-        <item name="android:windowNoTitle">false</item>
-        <item name="android:windowTitleSize">40dp</item>  
         <item name="android:windowTitleBackgroundStyle">@style/Titleground</item>
     </style>
 
+	<style name="main_tab_bottom">
+	    <item name="android:textSize">@dimen/bottom_tab_font_size</item>
+	    <item name="android:textColor">#ffffffff</item>
+	    <item name="android:ellipsize">marquee</item>
+	    <item name="android:gravity">center_horizontal</item>
+	    <item name="android:background">@drawable/home_btn_bg</item>
+	    <item name="android:paddingTop">@dimen/bottom_tab_padding_up</item>
+	    <item name="android:layout_width">fill_parent</item>
+	    <item name="android:layout_height">wrap_content</item>
+	    <item name="android:button">@null</item>
+	    <item name="android:singleLine">true</item>
+	    <item name="android:drawablePadding">@dimen/bottom_tab_padding_drawable</item>
+	    <item name="android:layout_weight">1.0</item>
+	</style>
+	
+	 <style name="Transparent">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>
+    </style>
+    
 </resources>
