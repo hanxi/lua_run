@@ -17,36 +17,37 @@
         android:id="@+id/titlebarText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/btnNew"
+        android:layout_alignBottom="@+id/btnNew"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="34dp"
-        android:layout_toRightOf="@+id/btnNew"
+        android:layout_centerHorizontal="true"
         android:text="@string/app_name" />
+
     <Button
         android:id="@+id/btnOpen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="18dp"
         android:background="@drawable/open" />
-
-    <Button
-        android:id="@+id/btnNew"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/btnSave"
-        android:layout_alignBottom="@+id/btnSave"
-        android:layout_marginLeft="18dp"
-        android:layout_toRightOf="@+id/btnSave"
-        android:background="@drawable/newfile" />
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="17dp"
+        android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/btnOpen"
+        android:layout_centerVertical="true"
         android:background="@drawable/save" />
+
+    <Button
+        android:id="@+id/btnNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/btnSave"
+        android:layout_centerVertical="true"
+        android:background="@drawable/newfile" />
     
 </RelativeLayout>

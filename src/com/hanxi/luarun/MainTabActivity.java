@@ -48,6 +48,7 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
 
         // 初始化广告
         AdManager.getInstance(this).init("748ed2ca85f9d618","b37e60ff668dadc7", false);
+        AdManager.getInstance(this).setEnableDebugLog(false);
         SmartBannerManager.init(this);
     }
 

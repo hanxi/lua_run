@@ -163,7 +163,7 @@ public class MainActivity extends Activity {
         title.setText(SdcardHelper.getFileNameFromPath(fileName));
         mLastOpenFileName = fileName;
         mIsSave = true;
-        System.out.println("misSave1=true");
+        //System.out.println("misSave1=true");
 	}
     @Override
     protected void onStop(){
@@ -196,7 +196,7 @@ public class MainActivity extends Activity {
 				Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savefaild), Toast.LENGTH_LONG).show();			
 			}
 		}
-		System.out.println(mLastOpenFileName);
+		//System.out.println(mLastOpenFileName);
     }
 
     @Override
@@ -214,12 +214,12 @@ public class MainActivity extends Activity {
     	mIsSave = true;
     	
     	boolean checkResult = net.youmi.android.spot.SpotManager.checkSpotAdConfig(this); 
-    	if (checkResult) {
-    		System.out.println("检查无积分插播广告配置OK");
+    	if (!checkResult) {
+    		System.out.println("检查无积分插播广告配置失败");
     	}
     	checkResult = net.youmi.android.smart.SmartBannerManager.checkSmartBannerAdConfig(this); 
-    	if (checkResult) {
-    		System.out.println("检查无积分广告配置OK");
+    	if (!checkResult) {
+    		System.out.println("检查无积分广告配置失败");
     	}
     	
     	// 设置单击按钮时打开文件对话框
@@ -276,7 +276,7 @@ public class MainActivity extends Activity {
                                 openFile(TMP_FILE_NAME);
                                 source.setText("");
                                 mLastOpenFileName = TMP_FILE_NAME;
-                                System.out.println(mLastOpenFileName);
+                                //System.out.println(mLastOpenFileName);
                         }
                 });
 
@@ -300,8 +300,8 @@ public class MainActivity extends Activity {
 
 		source = (EditText) findViewById(R.id.editText);
 		boolean canHighlight = KeywordHighlight.loadHighlight(this, "t.lua");
-	    if (canHighlight) {
-	    	System.out.println("can hightlight it");
+	    if (!canHighlight) {
+	    	System.out.println("can't hightlight it");
 	    }
         StringBuffer strb = SdcardHelper.getFileToString(mLastOpenFileName);
 		SpannableStringBuilder sp = new SpannableStringBuilder(strb);
@@ -412,7 +412,7 @@ public class MainActivity extends Activity {
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
 			KeywordHighlight.setHighlight((SpannableStringBuilder)s,start,start+count,start+before);
 	    	mIsSave = false;
-	        System.out.println("misSave2=false");
+	        //System.out.println("misSave2=false");
 		}
 		@Override
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {

@@ -82,7 +82,7 @@ public class FileDialog {
        				FileSelectView fileListView = (FileSelectView)saveDialogLayout.findViewWithTag("SaveDialogListView");
        				String path = fileListView.getCurPath();
        				fileName = path+"/"+fileName;
-       				System.out.println("filename="+fileName);
+       				//System.out.println("filename="+fileName);
     				if (SdcardHelper.writeStringToFile(fileName,content)) {
 						Toast.makeText(mc, mc.getString(R.string.savesuccess), Toast.LENGTH_LONG).show();		
 						dialog.dismiss();
