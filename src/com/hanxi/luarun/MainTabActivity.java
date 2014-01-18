@@ -6,6 +6,8 @@ import net.youmi.android.smart.SmartBannerManager;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Window;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
@@ -18,7 +20,6 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
 	private Intent mAIntent;
 	private Intent mBIntent;
 	private Intent mCIntent;
-	private Intent mDIntent;
 	
     /** Called when the activity is first created. */
     @Override
@@ -32,7 +33,6 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
         this.mAIntent = new Intent(this,HelpActivity.class);
         this.mBIntent = new Intent(this,MainActivity.class);
         this.mCIntent = new Intent(this,DocActivity.class);
-        this.mDIntent = new Intent(this,SetActivity.class);
         
 		((RadioButton) findViewById(R.id.radio_button0))
 		.setOnCheckedChangeListener(this);
@@ -41,8 +41,6 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
         ((RadioButton) findViewById(R.id.radio_button2))
 		.setOnCheckedChangeListener(this);
         ((RadioButton) findViewById(R.id.radio_button3))
-		.setOnCheckedChangeListener(this);
-        ((RadioButton) findViewById(R.id.radio_button4))
 		.setOnCheckedChangeListener(this);
         
         setupIntent();
@@ -67,10 +65,7 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
 				this.mTabHost.setCurrentTabByTag("C_TAB");
 				break;
 			case R.id.radio_button3:
-				this.mTabHost.setCurrentTabByTag("D_TAB");
-				break;
-			case R.id.radio_button4:
-				DiyManager.showRecommendGameWall(this);
+				DiyManager.showRecommendWall(this);
 				break;
 			}
 		}
@@ -90,8 +85,6 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
 		localTabHost.addTab(buildTabSpec("C_TAB",R.string.main_doc,
 				R.drawable.icon_3_n, this.mCIntent));
 
-		localTabHost.addTab(buildTabSpec("D_TAB", R.string.main_set,
-				R.drawable.icon_4_n, this.mDIntent));
 	}
 	
 	private TabHost.TabSpec buildTabSpec(String tag, int resLabel, int resIcon,
@@ -99,4 +92,30 @@ public class MainTabActivity extends TabActivity implements OnCheckedChangeListe
 		return this.mTabHost.newTabSpec(tag).setIndicator(getString(resLabel),
 				getResources().getDrawable(resIcon)).setContent(content);
 	}
+	
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch (item.getItemId()) {
+/*            case R.id.action_settings:
+				Intent intent = new Intent();
+				intent.setClass(MainTabActivity.this,SetActivity.class);
+				startActivity(intent);
+                return true;*/
+            case R.id.action_exit:
+            	SysApplication.getInstance().exit();
+            	return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

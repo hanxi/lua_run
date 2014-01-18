@@ -9,7 +9,7 @@ public class DocActivity extends MyWebkitActivity {
 		super.onCreate(savedInstanceState);
 		SysApplication.getInstance().addActivity(this); 
 
-		DOC_URL = "file:///android_asset/www.lua.org/index.html";
+		DOC_URL = "file:///android_asset/www.lua.org/manual/5.2/index.html";
         mWebView.loadUrl(DOC_URL);
 	}
 }

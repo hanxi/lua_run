@@ -9,10 +9,12 @@ import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.View.OnFocusChangeListener;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +22,7 @@ import android.content.res.AssetManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,9 +43,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.youmi.android.smart.SmartBannerManager;
-import net.youmi.android.spot.SpotManager;
-
 import org.keplerproject.luajava.*;
 import org.openfiledialog.CallbackBundle;
 import org.openfiledialog.FileDialog;
@@ -60,7 +60,8 @@ public class MainActivity extends Activity {
 	Button execute;
 	private String mLastOpenFileName;
 	private boolean mIsSave = true;
-	
+
+	 
 	// public so we can play with these from Lua
 	public EditText source;
 	public LuaState L;
@@ -89,7 +90,6 @@ public class MainActivity extends Activity {
 			images.put(FileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
 			images.put(FileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
 			images.put(FileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
-			images.put("wav", R.drawable.filedialog_wavfile);	//wav文件图标
 			images.put("lua", R.drawable.filedialog_luafile);	//lua文件图标
 			images.put(FileDialog.sEmpty, R.drawable.filedialog_root);
 			Dialog dialog = FileDialog.createOpenDialog(id, this, this.getString(R.string.openfile), new CallbackBundle() {
@@ -112,7 +112,6 @@ public class MainActivity extends Activity {
 			images.put(FileDialog.sRoot, R.drawable.filedialog_root);	// 根目录图标
 			images.put(FileDialog.sParent, R.drawable.filedialog_folder_up);	//返回上一层的图标
 			images.put(FileDialog.sFolder, R.drawable.filedialog_folder);	//文件夹图标
-			images.put("wav", R.drawable.filedialog_wavfile);	//wav文件图标
 			images.put("lua", R.drawable.filedialog_luafile);	//lua文件图标
 			images.put(FileDialog.sEmpty, R.drawable.filedialog_root);
 			Dialog dialog = FileDialog.createSaveDialog(id, this, this.getString(R.string.savefile), new CallbackBundle() {
@@ -223,63 +222,63 @@ public class MainActivity extends Activity {
     		System.out.println("检查无积分广告配置OK");
     	}
     	
-        // 设置单击按钮时打开文件对话框
-        this.findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View arg0) {
-				if (mIsSave) {					
-					Bundle bundle = new Bundle();
-		            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
-					showDialog(openfileDialogId,bundle);
-				}
-				else {
-					AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-					builder.setTitle(MainActivity.this.getString(R.string.nosavering));
-					builder.setMessage(MainActivity.this.getString(R.string.nosavetext));
-					builder.setPositiveButton(MainActivity.this.getString(R.string.nosave), new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int whitch) {
-							Bundle bundle = new Bundle();
-				            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
-							showDialog(openfileDialogId,bundle);
-						}
-					});
-					// 系统只提供三个对话框按钮,区别是默认的显示位置,Neutral在中间
-					builder.setNegativeButton(MainActivity.this.getString(R.string.save), new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int whitch) {
-							saveFile();
-						}
-					});
-					AlertDialog dialog = builder.create();
-					dialog.show();//记得加上show()方法
-				}
-			}
-		});
+    	// 设置单击按钮时打开文件对话框
+        findViewById(R.id.btnOpen).setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View arg0) {
+                                if (mIsSave) {                                        
+                                        Bundle bundle = new Bundle();
+                            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+                                        showDialog(openfileDialogId,bundle);
+                                }
+                                else {
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                        builder.setTitle(MainActivity.this.getString(R.string.nosavering));
+                                        builder.setMessage(MainActivity.this.getString(R.string.nosavetext));
+                                        builder.setPositiveButton(MainActivity.this.getString(R.string.nosave), new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int whitch) {
+                                                        Bundle bundle = new Bundle();
+                                            bundle.putString("curPath", SdcardHelper.getFileDirPath(mLastOpenFileName));
+                                                        showDialog(openfileDialogId,bundle);
+                                                }
+                                        });
+                                        // 系统只提供三个对话框按钮,区别是默认的显示位置,Neutral在中间
+                                        builder.setNegativeButton(MainActivity.this.getString(R.string.save), new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int whitch) {
+                                                        saveFile();
+                                                }
+                                        });
+                                        AlertDialog dialog = builder.create();
+                                        dialog.show();//记得加上show()方法
+                                }
+                        }
+                });
 
         // 设置保存按钮事件
         findViewById(R.id.btnSave).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View arg0) {
-				saveFile();
-			}
-		});
+                        @Override
+                        public void onClick(View arg0) {
+                                saveFile();
+                        }
+                });
 
         // 设置新建按钮事件
         findViewById(R.id.btnNew).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View arg0) {
-				Editable strb = source.getText();
-				String content = strb.toString();
-				if (!SdcardHelper.writeStringToFile(mLastOpenFileName,content)) {
-					Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savefaild), Toast.LENGTH_LONG).show();			
-				}
-				openFile(TMP_FILE_NAME);
-				source.setText("");
-				mLastOpenFileName = TMP_FILE_NAME;
-				System.out.println(mLastOpenFileName);
-			}
-		});
+                        @Override
+                        public void onClick(View arg0) {
+                                Editable strb = source.getText();
+                                String content = strb.toString();
+                                if (!SdcardHelper.writeStringToFile(mLastOpenFileName,content)) {
+                                        Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.savefaild), Toast.LENGTH_LONG).show();                        
+                                }
+                                openFile(TMP_FILE_NAME);
+                                source.setText("");
+                                mLastOpenFileName = TMP_FILE_NAME;
+                                System.out.println(mLastOpenFileName);
+                        }
+                });
 
         // 数据持久化
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
@@ -540,26 +539,7 @@ public class MainActivity extends Activity {
 		return "Unknown error " + error;
 	}
 	
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    
+	    
 	@Override 
     public boolean onKeyDown(int keyCode, KeyEvent event) { 
 		if (keyCode == KeyEvent.KEYCODE_BACK) { 

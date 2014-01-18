@@ -4,14 +4,6 @@
     android:layout_width="fill_parent"
     android:layout_height="40dp"
     android:orientation="horizontal" >
-
-    <Button
-        android:id="@+id/btnOpen"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:text="@string/open" />
     
     <Button
         android:id="@+id/btnRun"
@@ -19,31 +11,42 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:text="@string/run_lua" />
-
-    <Button
-        android:id="@+id/btnNew"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/btnOpen"
-        android:layout_alignBottom="@+id/btnOpen"
-        android:layout_toRightOf="@+id/btnOpen"
-        android:text="@string/newfile" />
-
-    <Button
-        android:id="@+id/btnSave"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/btnNew"
-        android:text="@string/save" />
+        android:background="@drawable/run" />
 
     <TextView
         android:id="@+id/titlebarText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/btnSave"
+        android:layout_marginLeft="34dp"
+        android:layout_toRightOf="@+id/btnNew"
         android:text="@string/app_name" />
+    <Button
+        android:id="@+id/btnOpen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="18dp"
+        android:background="@drawable/open" />
+
+    <Button
+        android:id="@+id/btnNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/btnSave"
+        android:layout_alignBottom="@+id/btnSave"
+        android:layout_marginLeft="18dp"
+        android:layout_toRightOf="@+id/btnSave"
+        android:background="@drawable/newfile" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="17dp"
+        android:layout_toRightOf="@+id/btnOpen"
+        android:background="@drawable/save" />
     
 </RelativeLayout>

@@ -12,18 +12,20 @@
         android:orientation="vertical" >
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="vertical" >
+	<ScrollView
+	    android:layout_width="fill_parent"
+	    android:layout_height="match_parent"
+	    android:background="@android:drawable/edit_text"
+	    android:scrollbarStyle="outsideOverlay" >
 
         <EditText
             android:id="@+id/editText"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:ems="10"
+            android:layout_height="wrap_content"
+            android:ems="100"
             android:gravity="top"
+            android:minLines="100"
             android:inputType="textMultiLine" />
-    </LinearLayout>
+	</ScrollView>
 
 </LinearLayout>

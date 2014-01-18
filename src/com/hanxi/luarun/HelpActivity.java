@@ -9,7 +9,7 @@ public class HelpActivity extends MyWebkitActivity {
 		super.onCreate(savedInstanceState);
 		SysApplication.getInstance().addActivity(this); 
 
-		DOC_URL = "file:///android_asset/www.lua.org/index.html";
+		DOC_URL = "file:///android_asset/help.html";
         mWebView.loadUrl(DOC_URL);
 	}
 }

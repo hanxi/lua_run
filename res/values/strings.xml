@@ -3,7 +3,8 @@
 
     <string name="app_name">luaIDE</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">设置</string>
+    <string name="action_exit">退出</string>
     <string name="run_lua">运行</string>
     <string name="back">返回</string>
     <string name="open">打开</string>
@@ -31,4 +32,10 @@
     <string name="exit_time">1000</string>
     
     <string name="run_finished">执行完毕</string>
+    
+    <string name="welcome_text1">上滑可进入应用</string>
+    <string name="result_title">运行结果</string>
+    
+    <string name="popMenu">弹出菜单</string>
+    
 </resources>

@@ -1,7 +1,7 @@
 <resources>
 
     <style name="Titleground">
-        <item name="android:background">@drawable/bg</item>
+        <item name="android:background">@drawable/maintab_toolbar_bg</item>
     </style>
 
     <style name="MyTheme" parent="android:Theme">
