@@ -1,7 +1,6 @@
 package com.hanxi.luarun;
 
-import net.youmi.android.banner.AdSize;
-import net.youmi.android.banner.AdView;
+import com.zhuamob.android.ZhuamobLayout;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -26,18 +25,27 @@ public class ResultActivity extends Activity {
         LinearLayout mLinearLayout = (LinearLayout)findViewById(R.id.result_titlebar);
         mLinearLayout.addView(mBarView);  
 
+        /************************ 代码方式添加Banner广告 ***********************/
+      ZhuamobLayout zhuamobLayout = new ZhuamobLayout(this);
+      FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+              FrameLayout.LayoutParams.FILL_PARENT,
+              FrameLayout.LayoutParams.WRAP_CONTENT);
+      params.gravity = Gravity.BOTTOM;
+      addContentView(zhuamobLayout, params);
+        /*************************** 添加Banner广告结束 ************************/
+
 		// 广告
 //		SmartBannerManager.show(this);
       //实例化LayoutParams(重要)
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.FILL_PARENT,
-        FrameLayout.LayoutParams.WRAP_CONTENT);     
+     //   FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+     //   FrameLayout.LayoutParams.FILL_PARENT,
+     //   FrameLayout.LayoutParams.WRAP_CONTENT);     
         //设置广告条的悬浮位置
-        layoutParams.gravity = Gravity.BOTTOM | Gravity.RIGHT; // 这里示例为右下角  
+     //   layoutParams.gravity = Gravity.BOTTOM | Gravity.RIGHT; // 这里示例为右下角  
         //实例化广告条
-        AdView adView = new AdView(this, AdSize.FIT_SCREEN);
+     //   AdView adView = new AdView(this, AdSize.FIT_SCREEN);
         //调用Activity的addContentView函数
-        this.addContentView(adView, layoutParams);
+     //   this.addContentView(adView, layoutParams);
         
         Bundle bunde = this.getIntent().getExtras();
         String str=bunde.getString("result").toString();

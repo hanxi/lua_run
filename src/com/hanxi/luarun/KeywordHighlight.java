@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.os.Environment;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;

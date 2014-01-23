@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import android.os.Parcel;
 import android.text.ParcelableSpan;
 import android.text.TextPaint;
-import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.UpdateAppearance;
 

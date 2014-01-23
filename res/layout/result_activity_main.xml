@@ -25,4 +25,7 @@
 	        android:scrollbars="vertical"
 	        android:text="@string/hello_world" />
 	</ScrollView>
+
+
+	
 </LinearLayout>

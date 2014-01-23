@@ -2,6 +2,9 @@ package com.hanxi.luarun;
 
 import java.util.LinkedList; 
 import java.util.List; 
+
+import com.zhuamob.android.ZhuamobLayout;
+
 import android.app.Activity; 
 import android.app.Application; 
  
@@ -23,7 +26,8 @@ public class SysApplication extends Application {
     } 
  
     public void exit() { 
-        try { 
+        try {
+            ZhuamobLayout.clean();
             for (Activity activity : mList) { 
                 if (activity != null) 
                     activity.finish(); 

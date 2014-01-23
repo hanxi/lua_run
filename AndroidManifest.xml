@@ -69,36 +69,26 @@
         </activity>
         
 
-    <activity
-        android:name="net.youmi.android.AdBrowser"
-        android:configChanges="keyboard|keyboardHidden|orientation"            
-        android:theme="@android:style/Theme.Light.NoTitleBar" >
-    </activity>
-    <service
-        android:name="net.youmi.android.AdService"
-        android:exported="false" >
-    </service>
-    <receiver 
-        android:name="net.youmi.android.AdReceiver" >
-        <intent-filter>
-            <action android:name="android.intent.action.PACKAGE_ADDED" />
-            <data android:scheme="package" />
-        </intent-filter>
-    </receiver> 
-    <activity
-    android:name="net.youmi.android.SmartBannerActivity"
-    android:configChanges="keyboard|keyboardHidden|orientation"
-    android:theme="@style/Transparent">        
-    </activity>
-    <service
-    android:name="net.youmi.android.SmartBannerService"
-    android:exported="false">        
-    </service>
+        <!-- 有米传媒 SDKV4 所需配置 -->
+        <meta-data
+            android:name="YOUMI_CHANNEL"
+            android:value="0" >
+        </meta-data>
+
+        <activity
+            android:name="net.youmi.android.AdBrowser"
+            android:configChanges="keyboard|keyboardHidden|orientation"
+            android:theme="@android:style/Theme.NoTitleBar" >
+        </activity>
+
+        <service android:name="net.youmi.android.AdService" >
+        </service>
+
     
-    <meta-data android:name="YOUMI_CHANNEL"
-                android:value="10190" >
-    </meta-data>
+    <meta-data 
+        android:name="ZHUAMOB_APPKEY" 
+        android:value="ad9574a81460a5754a201819" />
+    <service android:name="com.mj.MjService" />
     
     </application>
-    
 </manifest>

@@ -3,6 +3,8 @@ package org.openfiledialog;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -237,6 +239,15 @@ public class FileDialog {
 					}
 				}  
 			}
+			Comparator<Map<String, Object>> comparator = new Comparator<Map<String, Object>>(){
+				   public int compare(Map<String, Object> s1, Map<String, Object> s2) {
+					   String n1 = (String) s1.get("name");
+					   String n2 = (String) s2.get("name");
+				       return n1.compareTo(n2);
+				   }
+				};
+			Collections.sort(lfolders,comparator);
+			Collections.sort(lfiles,comparator);
 			
 			list.addAll(lfolders); // 先添加文件夹，确保文件夹显示在上面
 			list.addAll(lfiles);	//再添加文件
