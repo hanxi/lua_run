@@ -34,28 +34,28 @@ public class ForegroundColorSpan extends CharacterStyle
     static private ArrayList<ForegroundColorSpan> sPool = new ArrayList<ForegroundColorSpan>();
 
 
-	public ForegroundColorSpan(int color) {
-		mColor = color;
-	}
+    public ForegroundColorSpan(int color) {
+        mColor = color;
+    }
 
-	public int getStart() {
-		return mStart;
-	}
-	public int getEnd() {
-		return mEnd;
-	}
+    public int getStart() {
+        return mStart;
+    }
+    public int getEnd() {
+        return mEnd;
+    }
 
-	public void setArea(int start, int end) {
-		mStart = start;
-		mEnd = end;
-	}
+    public void setArea(int start, int end) {
+        mStart = start;
+        mEnd = end;
+    }
 
     public ForegroundColorSpan(Parcel src) {
         mColor = src.readInt();
     }
 
     public int getSpanTypeId() {
-    	return 2;
+        return 2;
     }
 
     public int describeContents() {
@@ -66,14 +66,14 @@ public class ForegroundColorSpan extends CharacterStyle
         dest.writeInt(mColor);
     }
 
-	public int getForegroundColor() {
-		return mColor;
-	} 
+    public int getForegroundColor() {
+        return mColor;
+    }
 
     @Override
-	public void updateDrawState(TextPaint ds) {
-		ds.setColor(mColor);
-	}
+    public void updateDrawState(TextPaint ds) {
+        ds.setColor(mColor);
+    }
 
     public boolean isLapped(int s, int e)
     {
@@ -83,8 +83,8 @@ public class ForegroundColorSpan extends CharacterStyle
     static public ForegroundColorSpan obtain(int color,int start,int end)
     {
         if ( sPool.size() == 0 ){
-        	ForegroundColorSpan fcs = new ForegroundColorSpan(color);
-        	fcs.setArea(start, end);
+            ForegroundColorSpan fcs = new ForegroundColorSpan(color);
+            fcs.setArea(start, end);
             return fcs;
         }else{
             ForegroundColorSpan fcs = sPool.get(0);
