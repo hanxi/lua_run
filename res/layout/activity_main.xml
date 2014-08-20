@@ -3,7 +3,8 @@
     android:id="@+id/LinearLayout2"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
+    android:background="@drawable/edittext_bg"
+    android:orientation="vertical" >
 
     <LinearLayout
         android:id="@+id/titlebar"
@@ -14,7 +15,7 @@
 
 	<ScrollView
 	    android:layout_width="fill_parent"
-	    android:layout_height="match_parent"
+	    android:layout_height="fill_parent"
 	    android:background="@android:drawable/edit_text"
 	    android:scrollbarStyle="outsideOverlay" >
 
@@ -22,10 +23,12 @@
             android:id="@+id/editText"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/edittext_bg"
             android:ems="100"
             android:gravity="top"
-            android:minLines="100"
-            android:inputType="textMultiLine" />
+            android:inputType="textMultiLine"
+            android:minLines="100" />
+
 	</ScrollView>
 
 </LinearLayout>
