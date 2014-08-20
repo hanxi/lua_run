@@ -16,7 +16,7 @@ lua_run
 
 ```
    $ cd lua_run
-   $ android update project -p . -tandroid-19
+   $ android update project -p . -t android-19
    $ sh build_native.sh
 ```
 
