@@ -11,6 +11,14 @@ lua_run
 
 * 集成lua5.2离线文档
 
+## 编译步骤
+
+
+```
+   $ cd lua_run
+   $ android update project -p . -tandroid-19
+   $ sh build_native.sh
+```
 
 ## other
 
