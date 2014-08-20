@@ -33,9 +33,9 @@ public class MainTabActivity extends TabActivity implements
     private Intent mBIntent;
     private Intent mCIntent;
 
-    private static final String ADS_APP_ID = "100010233";
-    private static final String ADS_SECRET_KEY = "6f1fa5e237fb4bf0212d398816b581bc";
-    private static final String TAG_LIST = "a5d122a5a0d4e68822eb74ba98be5d90";
+    private static final String ADS_APP_ID = "100012167";
+    private static final String ADS_SECRET_KEY = "c75256969f0ffd5eb2e926886746d21c";
+    private static final String TAG_LIST = "1d3bfd296faf98b3447ddddff39f617e";
 
     private void drawUpdateIndicator(int color, boolean drawLeftOrRight) {
         ShapeDrawable smallerCircle = new ShapeDrawable(new OvalShape());
