@@ -24,6 +24,8 @@ import com.wandoujia.ads.sdk.Ads;
 import com.wandoujia.ads.sdk.loader.Fetcher;
 import com.wandoujia.ads.sdk.widget.AdBanner;
 
+import com.readystatesoftware.viewbadger.BadgeView;
+
 @SuppressWarnings("deprecation")
 public class MainTabActivity extends TabActivity implements
         OnCheckedChangeListener {
@@ -37,25 +39,12 @@ public class MainTabActivity extends TabActivity implements
     private static final String ADS_SECRET_KEY = "c75256969f0ffd5eb2e926886746d21c";
     private static final String TAG_LIST = "1d3bfd296faf98b3447ddddff39f617e";
 
-    private void drawUpdateIndicator(int color, boolean drawLeftOrRight) {
-        ShapeDrawable smallerCircle = new ShapeDrawable(new OvalShape());
-        smallerCircle.setIntrinsicHeight(60);
-        smallerCircle.setIntrinsicWidth(60);
-        smallerCircle.setBounds(new Rect(0, 0, 60, 60));
-        smallerCircle.getPaint().setColor(color);
-        smallerCircle.setPadding(50, 50, 50, 100);
-
-        Drawable drawableleft = null;
-        Drawable drawableRight = null;
-        if (drawLeftOrRight) {
-            drawableleft = smallerCircle;
-        } else {
-            drawableRight = smallerCircle;
-        }
-        ((RadioButton) findViewById(R.id.radio_button3))
-                .setCompoundDrawables(drawableleft, null, drawableRight, null);
+    private void drawUpdateIndicator(String txt) {
+        View target = findViewById(R.id.radio_button3);
+        BadgeView badge = new BadgeView(this, target);
+        badge.setText(txt);
+        badge.show();
     }
-
 
     /** Called when the activity is first created. */
     @Override
@@ -91,8 +80,9 @@ public class MainTabActivity extends TabActivity implements
         Ads.preLoad(this, Fetcher.AdFormat.appwall, "APP", TAG_LIST, new AdListener() {
             @Override
             public void onAdLoaded() {
+                drawUpdateIndicator("New");
                 if (Ads.getUpdateAdCount("APP") > 0) {
-                    drawUpdateIndicator(Color.RED, true);
+                    //drawUpdateIndicator("New");
                 }
             }
         });
@@ -100,8 +90,9 @@ public class MainTabActivity extends TabActivity implements
         Ads.preLoad(this, Fetcher.AdFormat.appwall, "GAME", TAG_LIST, new AdListener() {
             @Override
             public void onAdLoaded() {
+                drawUpdateIndicator("New");
                 if (Ads.getUpdateAdCount("GAME") > 0) {
-                    drawUpdateIndicator(Color.GREEN, false);
+                    //drawUpdateIndicator("New");
                 }
             }
         });
