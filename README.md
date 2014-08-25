@@ -32,6 +32,10 @@ lua_run
 
 * lua文档 <http://www.lua.org/manual/5.2/>
 
+### apk下载地址
+
+* 豌豆荚：<http://www.wandoujia.com/apps/com.hanxi.luarun>
+
 ### 截图
 
 ![编辑器](1.jpg)
