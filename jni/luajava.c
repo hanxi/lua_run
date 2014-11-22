@@ -7,6 +7,8 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+#include "luasocket.h"  
+#include "mime.h" 
 
 #define  LOG_TAG    "libluajava"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -85,6 +87,9 @@ Java_com_hanxi_luarun_MainActivity_luainit( JNIEnv * env, jobject jobj, jstring 
     L = luaL_newstate();
     luaL_checkversion(L);
     luaL_openlibs(L);   // link lua lib
+    luaL_requiref(L, "mime.core", luaopen_mime_core, 0);
+    luaL_requiref(L, "socket.core", luaopen_socket_core, 0);
+    lua_settop(L,0);
 
     const char *path = (*env)->GetStringUTFChars(env, wpath, NULL);
     lua_addpath(L,path);

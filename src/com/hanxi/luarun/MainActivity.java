@@ -382,20 +382,6 @@ public class MainActivity extends Activity {
 		super.onPause();
 	}
 
-	private String errorReason(int error) {
-		switch (error) {
-		case 4:
-			return "Out of memory";
-		case 3:
-			return "Syntax error";
-		case 2:
-			return "Runtime error";
-		case 1:
-			return "Yield error";
-		}
-		return "Unknown error " + error;
-	}
-
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {

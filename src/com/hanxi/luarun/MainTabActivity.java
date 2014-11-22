@@ -10,21 +10,7 @@ import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TabHost;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
-import android.graphics.Rect;
-import android.view.View.OnClickListener;
-import android.view.View;
-import android.widget.Toast;
 
-import com.wandoujia.ads.sdk.AdListener;
-import com.wandoujia.ads.sdk.Ads;
-import com.wandoujia.ads.sdk.loader.Fetcher;
-import com.wandoujia.ads.sdk.widget.AdBanner;
-
-import com.readystatesoftware.viewbadger.BadgeView;
 
 @SuppressWarnings("deprecation")
 public class MainTabActivity extends TabActivity implements
@@ -34,17 +20,6 @@ public class MainTabActivity extends TabActivity implements
     private Intent mAIntent;
     private Intent mBIntent;
     private Intent mCIntent;
-
-    private static final String ADS_APP_ID = "100012167";
-    private static final String ADS_SECRET_KEY = "c75256969f0ffd5eb2e926886746d21c";
-    private static final String TAG_LIST = "1d3bfd296faf98b3447ddddff39f617e";
-
-    private void drawUpdateIndicator(String txt) {
-        View target = findViewById(R.id.radio_button3);
-        BadgeView badge = new BadgeView(this, target);
-        badge.setText(txt);
-        badge.show();
-    }
 
     /** Called when the activity is first created. */
     @Override
@@ -64,38 +39,9 @@ public class MainTabActivity extends TabActivity implements
                 .setOnCheckedChangeListener(this);
         ((RadioButton) findViewById(R.id.radio_button2))
                 .setOnCheckedChangeListener(this);
-        ((RadioButton) findViewById(R.id.radio_button3))
-                .setOnCheckedChangeListener(this);
-
         setupIntent();
         this.mTabHost.setCurrentTabByTag("B_TAB");
 
-         // Init AdsSdk.
-        try {
-            Ads.init(this, ADS_APP_ID, ADS_SECRET_KEY);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Ads.preLoad(this, Fetcher.AdFormat.appwall, "APP", TAG_LIST, new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                drawUpdateIndicator("New");
-                if (Ads.getUpdateAdCount("APP") > 0) {
-                    //drawUpdateIndicator("New");
-                }
-            }
-        });
-
-        Ads.preLoad(this, Fetcher.AdFormat.appwall, "GAME", TAG_LIST, new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                drawUpdateIndicator("New");
-                if (Ads.getUpdateAdCount("GAME") > 0) {
-                    //drawUpdateIndicator("New");
-                }
-            }
-        });
     }
 
     @Override
@@ -110,13 +56,6 @@ public class MainTabActivity extends TabActivity implements
                 break;
             case R.id.radio_button2:
                 this.mTabHost.setCurrentTabByTag("C_TAB");
-                break;
-            case R.id.radio_button3:
-                buttonView.setChecked(false);
-                Ads.showAppWall(this, TAG_LIST);
-                Toast.makeText(this,
-                        this.getString(R.string.thankyou),
-                        Toast.LENGTH_LONG).show();
                 break;
             }
         }
