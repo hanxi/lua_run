@@ -20,6 +20,18 @@ lua_run
    $ sh build_native.sh
 ```
 
+## 使用luasocket库
+
+* 拷贝jni/luasocket/src/*.lua 到/sdcard/.luaRun/目录下
+
+* 测试luasocket
+
+```lua
+local socket = require"socket"
+local mime   = require"mime"
+print("Hello from " .. socket._VERSION .. " and " .. mime._VERSION .. "!")
+```
+
 ## other
 
 ### 制作过程中借用了下面内容
