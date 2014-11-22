@@ -59,6 +59,7 @@ public class MainActivity extends Activity {
 	public native void luaaddpath(String str);
 
 	public native void luainit(String str);
+	public native void luarestart();
 
 	public native void luacleanoutput();
 
@@ -341,7 +342,6 @@ public class MainActivity extends Activity {
 		handler = new Handler();
 
 		luainit(mWriteablePath);
-		luaaddpath(SdcardHelper.getFileDirPath(mLastOpenFileName));
 	}
 
 	class watcher implements TextWatcher {
@@ -368,6 +368,8 @@ public class MainActivity extends Activity {
 
 	String evalLua(String src) {
 		luacleanoutput();
+        luarestart();
+		luaaddpath(SdcardHelper.getFileDirPath(mLastOpenFileName));
 		String res = luadostring(src);
 		return res;
 	}
