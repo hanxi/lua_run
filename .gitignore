@@ -29,3 +29,14 @@ proguard/
 *.ipr
 *.iws
 .idea/
+
+build/
+.gradle/
+
+local.properties
+
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
