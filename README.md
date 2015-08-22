@@ -46,9 +46,9 @@ print("Hello from " .. socket._VERSION .. " and " .. mime._VERSION .. "!")
 
 ### 截图
 
-![编辑器](1.jpg)
+![编辑器](img/1.jpg)
 
-![运行结果](2.jpg)
+![运行结果](img/2.jpg)
 
-![离线文档](3.jpg)
+![离线文档](img/3.jpg)
 
